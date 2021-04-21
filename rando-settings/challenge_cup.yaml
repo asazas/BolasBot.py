@@ -1,7 +1,7 @@
 ---
-goal_name: tournament
+goal_name: challenge cup
 customizer: false
-description: "Tournament weights."
+description: "Ajustes Challenge Cup 2021."
 settings:
   allow_quickswap: true
   goal: ganon

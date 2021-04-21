@@ -1,7 +1,7 @@
 ---
-goal_name: tournament
+goal_name: main tournament
 customizer: false
-description: "Tournament weights."
+description: "Ajustes Main Tournament 2021."
 settings:
   allow_quickswap: true
   goal: ganon
