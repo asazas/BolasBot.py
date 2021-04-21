@@ -10,5 +10,6 @@ El bot de las bolas en Python
 
 ## Instrucciones de ejecución
 
-1. Editar `config.ini`: introducir la clave de API de Discord como valor de la variable `token`.
-2. Ejecutar `main.py` con Python.
+1. Editar `config_example.ini`: introducir la clave de API de Discord como valor de la variable `token`.
+2. Renombrar `config_example.ini` a `config.ini`.
+3. Ejecutar `main.py` con Python.
