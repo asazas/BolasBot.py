@@ -1,5 +1,7 @@
 .vscode
 config.ini
+data/
+db-browser-sqlite/
 
 
 # Byte-compiled / optimized / DLL files
