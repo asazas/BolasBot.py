@@ -9,6 +9,12 @@ import discord
 from discord.ext import commands
 
 
+async def generate_from_yaml(yaml_contents):
+    settings_yaml = yaml.load(yaml_contents, Loader=yaml.FullLoader)
+    seed = await pyz3r.alttpr(settings=settings_yaml['settings'])
+    return seed
+
+
 async def generate_from_preset(preset):
 
     seed = None
@@ -18,8 +24,7 @@ async def generate_from_preset(preset):
         with open("rando-settings/{}.yaml".format(preset), "r") as settings_file:
             my_settings = settings_file.read()
         
-        settings_yaml = yaml.load(my_settings, Loader=yaml.FullLoader)
-        seed = await pyz3r.alttpr(settings=settings_yaml['settings'])
+        seed = await generate_from_yaml(my_settings)
     
     return seed
 
@@ -40,18 +45,20 @@ class Seedgen(commands.Cog):
 
         if ctx.message.attachments:
             my_settings = await (ctx.message.attachments[0]).read()
+            seed = await generate_from_yaml(my_settings)
         
-        if preset:
-            with open("rando-settings/{}.yaml".format(preset), "r") as settings_file:
-                my_settings = settings_file.read()
+        elif preset:
+            seed = await generate_from_preset(preset)
         
-        settings_yaml = yaml.load(my_settings, Loader=yaml.FullLoader)
-        seed = await pyz3r.alttpr(settings=settings_yaml['settings'])
-        await ctx.reply(seed.url, mention_author=False)
+        if seed:
+            await ctx.reply(seed.url, mention_author=False)
+        else:
+            await ctx.reply("Error al generar la seed.", mention_author=False,
+                            file=discord.File("media/error.png"))
 
     
     @crea_seed.error
     async def crea_seed_error(self, ctx, error):
-        err_file = discord.File("media/error.png")
-        await ctx.reply("Se ha producido un error.", mention_author=False, file=err_file)
+        await ctx.reply("Se ha producido un error.", mention_author=False,
+                        file=discord.File("media/error.png"))
         

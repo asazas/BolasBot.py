@@ -4,6 +4,7 @@ import sqlite3
 
 import discord
 
+
 def init_db(db_name):
     mydb = sqlite3.connect(db_name)
     cur = mydb.cursor()
@@ -19,9 +20,13 @@ def init_db(db_name):
                     Name TEXT NOT NULL UNIQUE,
                     Creator INTEGER REFERENCES Players(DiscordId) ON DELETE SET NULL,
                     StartDate TEXT NOT NULL,
-                    Finished INTEGER CHECK (Finished == 0 OR Finished == 1) NOT NULL DEFAULT 0,
+                    Status INTEGER CHECK (Status == 0 OR Status == 1 OR Status == 2) NOT NULL DEFAULT 0,
                     SeedHash TEXT,
-                    SeedUrl TEXT)''')
+                    SeedUrl TEXT,
+                    RoleId INT NOT NULL,
+                    ResultsChannel INT NOT NULL,
+                    ResultsMessage INT NOT NULL,
+                    SpoilersChannel INT NOT NULL)''')
     
     cur.execute('''CREATE TABLE IF NOT EXISTS AsyncResults (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,39 +37,44 @@ def init_db(db_name):
                     UNIQUE(Race, Player))
                 ''')
 
-    mydb.commit()
-    mydb.close()
+    return (mydb, cur)
 
 
-def get_db_for_server(server):
+def open_db(server):
     my_db = 'data/{}.db'.format(server)
     if not Path(my_db).is_file():
-        init_db(my_db)
-    return my_db
+        return init_db(my_db)
+
+    db_conn = sqlite3.connect(my_db)
+    db_cur = db_conn.cursor()
+    return (db_conn, db_cur)
 
 
-def insert_player_if_not_exists(db_name, discord_id, name, discriminator, mention):
-    mydb = sqlite3.connect(db_name)
-    cur = mydb.cursor()
+def commit_and_close_db(db_conn):
+    db_conn.commit()
+    db_conn.close()
 
-    cur.execute("SELECT * FROM Players WHERE DiscordId = ?", (discord_id, ))
-    if not (cur.fetchall()):
-        cur.execute("INSERT INTO Players VALUES (?, ?, ?, ?)", (discord_id, name,
+
+def insert_player_if_not_exists(db_cur, discord_id, name, discriminator, mention):
+    db_cur.execute("SELECT * FROM Players WHERE DiscordId = ?", (discord_id, ))
+    if not (db_cur.fetchall()):
+        db_cur.execute("INSERT INTO Players VALUES (?, ?, ?, ?)", (discord_id, name,
                     discriminator, mention))
-        mydb.commit()
-    
-    mydb.close()
 
 
-def insert_async(db_name, name, creator, seed_hash, seed_url):
-    mydb = sqlite3.connect(db_name)
-    cur = mydb.cursor()
+def insert_async(db_cur, name, creator, seed_hash, seed_url, role_id, results_channel, results_message, spoilers_channel):
+    db_cur.execute('''INSERT INTO AsyncRaces(Name, Creator, StartDate, Status, SeedHash, SeedUrl, RoleId, ResultsChannel, ResultsMessage, SpoilersChannel) 
+                   VALUES (?, ?, datetime('now'), 0, ?, ?, ?, ?, ?, ?)''',
+                   (name, creator, seed_hash, seed_url, role_id, results_channel, results_message, spoilers_channel))
 
-    cur.execute('''INSERT INTO AsyncRaces(Name, Creator, StartDate, Finished, SeedHash, SeedUrl) 
-                VALUES (?, ?, datetime('now'), 0, ?, ?)''', (name, creator, seed_hash, seed_url))
-    mydb.commit()
 
-    mydb.close()
+def get_async_by_name(db_cur, name):
+    db_cur.execute("SELECT * FROM AsyncRaces WHERE Name = ?", (name, ))
+    return db_cur.fetchone()
+
+
+def update_async_status(db_cur, id, status):
+    db_cur.execute("UPDATE AsyncRaces SET Status = ? WHERE Id = ?", (status, id))
 
 
 def save_async_result(db_name, member):
