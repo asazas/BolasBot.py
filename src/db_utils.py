@@ -51,6 +51,10 @@ def open_db(server):
     return (db_conn, db_cur)
 
 
+def close_db(db_conn):
+    db_conn.close()
+
+
 def commit_and_close_db(db_conn):
     db_conn.commit()
     db_conn.close()
