@@ -107,15 +107,21 @@ class AsyncRace(commands.Cog):
 
 
     @commands.command()
-    @commands.has_permissions(manage_channels=True)
-    async def async_done(self, ctx):
+    @commands.guild_only()
+    async def async_done(self, ctx, race: str, time: str, collection: int):
         db_conn, db_cur = open_db(ctx.guild.id)
 
-        save_async_result(db_cur, ctx.author)
+        message = ctx.message
+        await message.delete()
 
+        race = get_async_by_name(db_cur, race)
+        if race and race[4] == 0:
+            save_async_result(db_cur, ctx.author)
+            await ctx.reply("Hecho.", mention_author=False)
+        
         commit_and_close_db(db_conn)
-        await ctx.reply("Hecho.", mention_author=False)
-    
+
+
     @async_done.error
     async def async_done_error(self, ctx, error):
         err_file = discord.File("media/error.png")

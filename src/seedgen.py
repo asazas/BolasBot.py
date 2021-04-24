@@ -11,7 +11,7 @@ from discord.ext import commands
 
 async def generate_from_yaml(yaml_contents):
     settings_yaml = yaml.load(yaml_contents, Loader=yaml.FullLoader)
-    seed = await pyz3r.alttpr(settings=settings_yaml['settings'])
+    seed = await pyz3r.alttpr(settings=settings_yaml['settings'], customizer=settings_yaml['customizer'])
     return seed
 
 

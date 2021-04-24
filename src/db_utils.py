@@ -32,6 +32,7 @@ def init_db(db_name):
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
                     Race INTEGER REFERENCES AsyncRaces(Id) ON DELETE SET NULL,
                     Player INTEGER REFERENCES Players(DiscordId) ON DELETE SET NULL,
+                    Timestamp TEXT NOT NULL,
                     Time INTEGER,
                     CollectionRate INTEGER,
                     UNIQUE(Race, Player))
@@ -77,10 +78,6 @@ def update_async_status(db_cur, id, status):
     db_cur.execute("UPDATE AsyncRaces SET Status = ? WHERE Id = ?", (status, id))
 
 
-def save_async_result(db_name, member):
-    mydb = sqlite3.connect(db_name)
-    cur = mydb.cursor()
-
-    pass
-    
-    mydb.close()
+def save_async_result(db_cur, race, player, time, collection_rate):
+    db_cur.execute('''REPLACE INTO AsyncResults(Race, Player, Timestamp, Time, CollectionRate)
+                   VALUES (?, ?, datetime('now'), ?, ?)''', (race, player, time, collection_rate))
