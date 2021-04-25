@@ -17,7 +17,7 @@ def init_db(db_name):
                     
     cur.execute('''CREATE TABLE IF NOT EXISTS AsyncRaces (
                     Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Name TEXT NOT NULL UNIQUE,
+                    Name TEXT NOT NULL,
                     Creator INTEGER REFERENCES Players(DiscordId) ON DELETE SET NULL,
                     StartDate TEXT NOT NULL,
                     Status INTEGER CHECK (Status == 0 OR Status == 1 OR Status == 2) NOT NULL DEFAULT 0,
@@ -79,9 +79,14 @@ def insert_async(db_cur, name, creator, seed_hash, seed_code, seed_url, role_id,
                    (name, creator, seed_hash, seed_code, seed_url, role_id, submit_channel, results_channel, results_message, spoilers_channel))
 
 
-def get_async_by_name(db_cur, name):
-    db_cur.execute("SELECT * FROM AsyncRaces WHERE Name = ?", (name, ))
-    return db_cur.fetchone()
+def get_active_async_races(db_cur):
+    db_cur.execute("SELECT * FROM AsyncRaces WHERE Status = 0 OR Status = 1")
+    return db_cur.fetchall()
+
+
+def search_async_by_name(db_cur, name):
+    db_cur.execute("SELECT * FROM AsyncRaces WHERE Name LIKE ?", (name, ))
+    return db_cur.fetchall()
 
 
 def get_async_by_submit(db_cur, subm_channel):

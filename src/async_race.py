@@ -8,14 +8,10 @@ import discord
 from discord.ext import commands
 
 from src.db_utils import (open_db, commit_db, close_db, insert_player_if_not_exists,
-    insert_async, get_async_by_name, get_async_by_submit, update_async_status, save_async_result,
+    insert_async, get_async_by_submit, get_active_async_races, update_async_status, save_async_result,
     get_results_for_race, get_player_by_id) 
 
 from src.seedgen import generate_from_preset, generate_from_hash, generate_from_yaml
-
-
-class BadAsyncError(Exception):
-    pass
 
 
 def get_results_text(db_cur, name):
@@ -38,18 +34,29 @@ def get_results_text(db_cur, name):
     return msg
 
 
-def get_async_data(db_cur, name):
-    my_async = get_async_by_name(db_cur, name)
+def get_async_data(db_cur, submit_channel):
+    my_async = get_async_by_submit(db_cur, submit_channel)
     player = get_player_by_id(db_cur, my_async[2])
 
     msg = "__**CARRERA ASÍNCRONA: {}**__\n".format(my_async[1])
-    msg += "**Abierta por: **{}\n".format(player[1])
+    msg += "**Iniciada por: **{}\n".format(player[1])
     msg += "**Fecha de inicio (UTC): **{}\n".format(my_async[3])
     msg += "**Seed: **{}".format(my_async[7])
     if my_async[6]:
         msg += " ({})".format(my_async[6])
     
     return msg
+
+
+def check_race_permissions(ctx, race):
+    auth_permissions = ctx.author.permissions_in(ctx.guild.get_channel(race[9]))
+    if auth_permissions.manage_channels or ctx.author.id == race[2]:
+        return True
+    
+    return False
+
+
+    ########################################
 
 
 class AsyncRace(commands.Cog):
@@ -59,7 +66,7 @@ class AsyncRace(commands.Cog):
     
     @commands.command()
     @commands.guild_only()
-    async def async_start(self, ctx, name: str, url_or_preset: str=""):
+    async def asyncstart(self, ctx, name: str, url_or_preset: str=""):
         db_conn, db_cur = open_db(ctx.guild.id)
 
         if len(name) > 20:
@@ -68,9 +75,11 @@ class AsyncRace(commands.Cog):
         creator = ctx.author
         insert_player_if_not_exists(db_cur, creator.id, creator.name, creator.discriminator, creator.mention)
 
-        if get_async_by_name(db_cur, name):
+        # Comprobación de límite: máximo de 10 asíncronas en el servidor
+        asyncs = get_active_async_races(db_cur)
+        if asyncs and len(asyncs) >= 10:
             close_db(db_conn)
-            raise Exception("Ya hay registrada una carrera asíncrona con ese nombre.")
+            raise commands.errors.CommandInvokeError("Demasiadas asíncronas activas en el servidor. Contacta a un moderador para purgar alguna.")
 
 
         # Crear o procesar seed
@@ -121,15 +130,33 @@ class AsyncRace(commands.Cog):
                      submit_channel.id, results_channel.id, results_msg.id, spoilers_channel.id)
 
         commit_db(db_conn)
-        async_data = get_async_data(db_cur, name)
+        async_data = get_async_data(db_cur, submit_channel.id)
         close_db(db_conn)
 
         data_msg = await submit_channel.send(async_data)
         await data_msg.pin()
+        await submit_channel.send("Por favor, mantened este canal lo más limpio posible y SIN SPOILERS.")
 
         text_ans = 'Abierta carrera asíncrona con nombre: {}\nEnvía resultados en {}'.format(name, submit_channel.mention)
 
         await ctx.reply(text_ans, mention_author=False)
+
+
+    @asyncstart.error
+    async def asyncstart_error(self, ctx, error):
+        error_mes = "Se ha producido un error."
+        if type(error) == commands.errors.MissingRequiredArgument:
+            error_mes = "Faltan argumentos para ejecutar el comando."
+        elif type(error) == commands.errors.BadArgument:
+            error_mes = "Argumentos inválidos."
+        elif type(error) == commands.errors.CommandInvokeError:
+            error_mes = error.original
+        
+        err_file = discord.File("media/error.png")
+        await ctx.reply(error_mes, mention_author=False, file=err_file)  
+
+
+    ########################################
 
 
     @commands.command()
@@ -141,12 +168,85 @@ class AsyncRace(commands.Cog):
         insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
 
         race = get_async_by_submit(db_cur, ctx.channel.id)
-        if race:
+
+        if not race:
+            close_db(db_conn)
+            return
+
+        if not check_race_permissions(ctx, race):
+            close_db(db_conn)
+            raise commands.errors.CommandInvokeError("Esta operación solo puede realizarla el creador original de la carrera o un moderador.")
+
+        if race[4] == 0:
             update_async_status(db_cur, race[0], 1)
             commit_db(db_conn)
             close_db(db_conn)
+            await ctx.reply("Esta carrera ha sido cerrada.", mention_author=False)
         else:
             close_db(db_conn)
+            raise commands.errors.CommandInvokeError("Esta carrera no está abierta.")
+
+    
+    @end.error
+    async def end_error(self, ctx, error):
+        error_mes = "Se ha producido un error."
+        if type(error) == commands.errors.MissingRequiredArgument:
+            error_mes = "Faltan argumentos para ejecutar el comando."
+        elif type(error) == commands.errors.BadArgument:
+            error_mes = "Argumentos inválidos."
+        elif type(error) == commands.errors.CommandInvokeError:
+            error_mes = error.original
+        
+        err_file = discord.File("media/error.png")
+        await ctx.reply(error_mes, mention_author=False, file=err_file)  
+
+
+    ########################################
+
+
+    @commands.command()
+    @commands.guild_only()
+    async def reopen(self, ctx):
+        db_conn, db_cur = open_db(ctx.guild.id)
+
+        author = ctx.author
+        insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
+
+        race = get_async_by_submit(db_cur, ctx.channel.id)
+
+        if not race:
+            close_db(db_conn)
+            return
+
+        if not check_race_permissions(ctx, race):
+            close_db(db_conn)
+            raise commands.errors.CommandInvokeError("Esta operación solo puede realizarla el creador original de la carrera o un moderador.")
+
+        if race[4] == 1:
+            update_async_status(db_cur, race[0], 0)
+            commit_db(db_conn)
+            close_db(db_conn)
+            await ctx.reply("Esta carrera ha sido reabierta.", mention_author=False)
+        else:
+            close_db(db_conn)
+            raise commands.errors.CommandInvokeError("Esta carrera no está cerrada.")
+
+    
+    @reopen.error
+    async def reopen_error(self, ctx, error):
+        error_mes = "Se ha producido un error."
+        if type(error) == commands.errors.MissingRequiredArgument:
+            error_mes = "Faltan argumentos para ejecutar el comando."
+        elif type(error) == commands.errors.BadArgument:
+            error_mes = "Argumentos inválidos."
+        elif type(error) == commands.errors.CommandInvokeError:
+            error_mes = error.original
+        
+        err_file = discord.File("media/error.png")
+        await ctx.reply(error_mes, mention_author=False, file=err_file)  
+
+
+    ########################################
 
 
     @commands.command()
@@ -158,7 +258,16 @@ class AsyncRace(commands.Cog):
         insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
 
         race = get_async_by_submit(db_cur, ctx.channel.id)
-        if race and race[4] == 1:
+
+        if not race:
+            close_db(db_conn)
+            return
+
+        if not check_race_permissions(ctx, race):
+            close_db(db_conn)
+            raise commands.errors.CommandInvokeError("Esta operación solo puede realizarla el creador original de la carrera o un moderador.")
+
+        if race[4] == 1:
             update_async_status(db_cur, race[0], 2)
 
             async_role = ctx.guild.get_role(race[8])
@@ -181,25 +290,48 @@ class AsyncRace(commands.Cog):
         
         else:
             close_db(db_conn)
+            raise commands.errors.CommandInvokeError("La carrera debe cerrarse antes de ser purgada.")
+
+
+    @purge.error
+    async def purge_error(self, ctx, error):
+        error_mes = "Se ha producido un error."
+        if type(error) == commands.errors.MissingRequiredArgument:
+            error_mes = "Faltan argumentos para ejecutar el comando."
+        elif type(error) == commands.errors.BadArgument:
+            error_mes = "Argumentos inválidos."
+        elif type(error) == commands.errors.CommandInvokeError:
+            error_mes = error.original
+        
+        err_file = discord.File("media/error.png")
+        await ctx.reply(error_mes, mention_author=False, file=err_file) 
+
+
+    ########################################
 
 
     @commands.command()
     @commands.guild_only()
     async def done(self, ctx, time: str, collection: int=0):
+        message = ctx.message
+        await message.delete()
+
         db_conn, db_cur = open_db(ctx.guild.id)
 
         author = ctx.author
         insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
 
         race = get_async_by_submit(db_cur, ctx.channel.id)
-        if race and race[4] == 0:
+
+        if not race:
+            close_db(db_conn)
+            return
+
+        if race[4] == 0:
             if re.match(r'^\d?\d:[0-5]\d:[0-5]\d$', time):
                 time_arr = [int(x) for x in time.split(':')]
                 time_s = 3600*time_arr[0] + 60*time_arr[1] + time_arr[2]
                 save_async_result(db_cur, race[0], author.id, time_s, collection)
-
-                message = ctx.message
-                await message.delete()
 
                 results_text = get_results_text(db_cur, race[1])
                 results_channel = ctx.guild.get_channel(race[10])
@@ -212,11 +344,11 @@ class AsyncRace(commands.Cog):
         
             else:
                 close_db(db_conn)
-                raise commands.errors.BadArgument("Tiempo inválido.")
+                raise commands.errors.CommandInvokeError("Tiempo inválido.")
         
         else:
             close_db(db_conn)
-            raise commands.errors.CommandInvokeError("La carrera asíncrona indicada no está abierta.")
+            raise commands.errors.CommandInvokeError("Esta carrera asíncrona no está abierta.")
         
         commit_db(db_conn)
         close_db(db_conn)
@@ -224,17 +356,18 @@ class AsyncRace(commands.Cog):
 
     @done.error
     async def done_error(self, ctx, error):
-        message = ctx.message
-        await message.delete()
-
         error_mes = "Se ha producido un error."
         if type(error) == commands.errors.MissingRequiredArgument:
+            message = ctx.message
+            await message.delete()
             error_mes = "Faltan argumentos para ejecutar el comando."
         elif type(error) == commands.errors.BadArgument:
+            message = ctx.message
+            await message.delete()
             error_mes = "Argumentos inválidos."
         elif type(error) == commands.errors.CommandInvokeError:
-            error_mes = "La carrera asíncrona indicada no está abierta."
+            error_mes = error.original
         
         err_file = discord.File("media/error.png")
-        await ctx.send(error_mes, mention_author=False, file=err_file)
+        await ctx.send(error_mes, file=err_file)
         

@@ -34,6 +34,10 @@ async def generate_from_hash(my_hash):
     return seed
 
 
+def get_seed_data(seed):
+    return "**URL: **{}\n**Hash: **{}".format(seed.url, " | ".join(seed.code))
+
+
 class Seedgen(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -44,23 +48,29 @@ class Seedgen(commands.Cog):
         Crea una seed probablemente horrible.
         """
         my_settings = ""
+        seed = None
 
         if ctx.message.attachments:
             my_settings = await (ctx.message.attachments[0]).read()
-            seed = await generate_from_yaml(my_settings)
-        
+            try:
+                seed = await generate_from_yaml(my_settings)
+            except:
+                raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
         elif preset:
             seed = await generate_from_preset(preset)
         
         if seed:
-            await ctx.reply(seed.url, mention_author=False)
+            await ctx.reply(get_seed_data(seed), mention_author=False)
         else:
-            await ctx.reply("Error al generar la seed.", mention_author=False,
-                            file=discord.File("media/error.png"))
+            raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el preset introducido sea válido.")
 
     
     @seed.error
     async def seed_error(self, ctx, error):
-        await ctx.reply("Se ha producido un error.", mention_author=False,
-                        file=discord.File("media/error.png"))
+        error_mes = "Se ha producido un error."
+        if type(error) == commands.errors.CommandInvokeError:
+            error_mes = error.original
+        
+        err_file = discord.File("media/error.png")
+        await ctx.send(error_mes, file=err_file)
         
