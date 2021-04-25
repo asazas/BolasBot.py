@@ -3,7 +3,7 @@ El bot de las bolas en Python
 
 ## Requisitos
 
- - Python 3.6 o superior.
+ - Python 3.8 o superior.
 
  - Dependencias: `discord.py`, `pyyaml`, `pyz3r`
     -> `pip install discord.py pyyaml pyz3r`
