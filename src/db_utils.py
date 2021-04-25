@@ -22,8 +22,10 @@ def init_db(db_name):
                     StartDate TEXT NOT NULL,
                     Status INTEGER CHECK (Status == 0 OR Status == 1 OR Status == 2) NOT NULL DEFAULT 0,
                     SeedHash TEXT,
+                    SeedCode TEXT,
                     SeedUrl TEXT,
                     RoleId INT NOT NULL,
+                    SubmitChannel INT NOT NULL,
                     ResultsChannel INT NOT NULL,
                     ResultsMessage INT NOT NULL,
                     SpoilersChannel INT NOT NULL)''')
@@ -33,8 +35,8 @@ def init_db(db_name):
                     Race INTEGER REFERENCES AsyncRaces(Id) ON DELETE SET NULL,
                     Player INTEGER REFERENCES Players(DiscordId) ON DELETE SET NULL,
                     Timestamp TEXT NOT NULL,
-                    Time INTEGER,
-                    CollectionRate INTEGER,
+                    Time INTEGER NOT NULL DEFAULT '99:59:59',
+                    CollectionRate INTEGER NOT NULL DEFAULT 0,
                     UNIQUE(Race, Player))
                 ''')
 
@@ -51,30 +53,39 @@ def open_db(server):
     return (db_conn, db_cur)
 
 
+def commit_db(db_conn):
+    db_conn.commit()
+
+
 def close_db(db_conn):
     db_conn.close()
 
 
-def commit_and_close_db(db_conn):
-    db_conn.commit()
-    db_conn.close()
+def get_player_by_id(db_cur, discord_id):
+    db_cur.execute("SELECT * FROM Players WHERE DiscordId = ?", (discord_id, ))
+    return db_cur.fetchone()
 
 
 def insert_player_if_not_exists(db_cur, discord_id, name, discriminator, mention):
-    db_cur.execute("SELECT * FROM Players WHERE DiscordId = ?", (discord_id, ))
-    if not (db_cur.fetchall()):
+    if not get_player_by_id(db_cur, discord_id):
         db_cur.execute("INSERT INTO Players VALUES (?, ?, ?, ?)", (discord_id, name,
                     discriminator, mention))
 
 
-def insert_async(db_cur, name, creator, seed_hash, seed_url, role_id, results_channel, results_message, spoilers_channel):
-    db_cur.execute('''INSERT INTO AsyncRaces(Name, Creator, StartDate, Status, SeedHash, SeedUrl, RoleId, ResultsChannel, ResultsMessage, SpoilersChannel) 
-                   VALUES (?, ?, datetime('now'), 0, ?, ?, ?, ?, ?, ?)''',
-                   (name, creator, seed_hash, seed_url, role_id, results_channel, results_message, spoilers_channel))
+def insert_async(db_cur, name, creator, seed_hash, seed_code, seed_url, role_id, submit_channel, results_channel, results_message, spoilers_channel):
+    db_cur.execute('''INSERT INTO AsyncRaces(Name, Creator, StartDate, Status, SeedHash, SeedCode, SeedUrl, 
+                   RoleId, SubmitChannel, ResultsChannel, ResultsMessage, SpoilersChannel) 
+                   VALUES (?, ?, datetime('now'), 0, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                   (name, creator, seed_hash, seed_code, seed_url, role_id, submit_channel, results_channel, results_message, spoilers_channel))
 
 
 def get_async_by_name(db_cur, name):
     db_cur.execute("SELECT * FROM AsyncRaces WHERE Name = ?", (name, ))
+    return db_cur.fetchone()
+
+
+def get_async_by_submit(db_cur, subm_channel):
+    db_cur.execute("SELECT * FROM AsyncRaces WHERE SubmitChannel = ?", (subm_channel, ))
     return db_cur.fetchone()
 
 
@@ -85,3 +96,12 @@ def update_async_status(db_cur, id, status):
 def save_async_result(db_cur, race, player, time, collection_rate):
     db_cur.execute('''REPLACE INTO AsyncResults(Race, Player, Timestamp, Time, CollectionRate)
                    VALUES (?, ?, datetime('now'), ?, ?)''', (race, player, time, collection_rate))
+
+
+def get_results_for_race(db_cur, race):
+    db_cur.execute('''SELECT Players.Name, AsyncResults.Time, AsyncResults.CollectionRate FROM AsyncResults
+                   JOIN AsyncRaces ON AsyncRaces.Id = AsyncResults.Race
+                   JOIN Players ON Players.DiscordId = AsyncResults.Player
+                   WHERE AsyncRaces.Name = ?
+                   ORDER BY AsyncResults.Time ASC, datetime(AsyncResults.Timestamp) ASC''', (race, ))
+    return db_cur.fetchall()

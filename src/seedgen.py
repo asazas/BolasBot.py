@@ -39,8 +39,10 @@ class Seedgen(commands.Cog):
         self.bot = bot
    
     @commands.command()
-    async def crea_seed(self, ctx, preset: str=""):
-
+    async def seed(self, ctx, preset: str=""):
+        """
+        Crea una seed probablemente horrible.
+        """
         my_settings = ""
 
         if ctx.message.attachments:
@@ -57,8 +59,8 @@ class Seedgen(commands.Cog):
                             file=discord.File("media/error.png"))
 
     
-    @crea_seed.error
-    async def crea_seed_error(self, ctx, error):
+    @seed.error
+    async def seed_error(self, ctx, error):
         await ctx.reply("Se ha producido un error.", mention_author=False,
                         file=discord.File("media/error.png"))
         
