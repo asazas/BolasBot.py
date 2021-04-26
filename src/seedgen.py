@@ -15,8 +15,16 @@ async def generate_from_yaml(yaml_contents):
     return seed
 
 
-async def generate_from_preset(preset):
+async def generate_from_attachment(attachment):
+    seed = None
 
+    file_contents = await attachment.read()
+    seed = await generate_from_yaml(file_contents)
+    
+    return seed
+
+
+async def generate_from_preset(preset):
     seed = None
 
     if Path('rando-settings/{}.yaml'.format(preset)).is_file():
@@ -47,13 +55,11 @@ class Seedgen(commands.Cog):
         """
         Crea una seed probablemente horrible.
         """
-        my_settings = ""
         seed = None
 
         if ctx.message.attachments:
-            my_settings = await (ctx.message.attachments[0]).read()
             try:
-                seed = await generate_from_yaml(my_settings)
+                seed = await generate_from_attachment(ctx.message.attachments[0])
             except:
                 raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
         elif preset:
@@ -62,7 +68,7 @@ class Seedgen(commands.Cog):
         if seed:
             await ctx.reply(get_seed_data(seed), mention_author=False)
         else:
-            raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el preset introducido sea válido.")
+            raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el preset o YAML introducido sea válido.")
 
     
     @seed.error

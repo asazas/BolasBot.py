@@ -11,11 +11,11 @@ from src.db_utils import (open_db, commit_db, close_db, insert_player_if_not_exi
     insert_async, get_async_by_submit, get_active_async_races, update_async_status, save_async_result,
     get_results_for_race, get_player_by_id) 
 
-from src.seedgen import generate_from_preset, generate_from_hash, generate_from_yaml
+from src.seedgen import generate_from_preset, generate_from_hash, generate_from_yaml, generate_from_attachment
 
 
-def get_results_text(db_cur, name):
-    results = get_results_for_race(db_cur, name)
+def get_results_text(db_cur, submit_channel):
+    results = get_results_for_race(db_cur, submit_channel)
     msg = "```\n"
     msg += "+" + "-"*47 + "+\n"
     msg += "| Pos. | Jugador              | Tiempo   | Col. |\n"
@@ -41,15 +41,18 @@ def get_async_data(db_cur, submit_channel):
     msg = "__**CARRERA ASÍNCRONA: {}**__\n".format(my_async[1])
     msg += "**Iniciada por: **{}\n".format(player[1])
     msg += "**Fecha de inicio (UTC): **{}\n".format(my_async[3])
-    msg += "**Seed: **{}".format(my_async[7])
-    if my_async[6]:
-        msg += " ({})".format(my_async[6])
+    if my_async[5]:
+        msg += "**Preset / Descripción: **{}\n".format(my_async[5])
+    if my_async[8]:
+        msg += "**Seed: **{}".format(my_async[8])
+    if my_async[7]:
+        msg += " ({})".format(my_async[7])
     
     return msg
 
 
 def check_race_permissions(ctx, race):
-    auth_permissions = ctx.author.permissions_in(ctx.guild.get_channel(race[9]))
+    auth_permissions = ctx.author.permissions_in(ctx.guild.get_channel(race[10]))
     if auth_permissions.manage_channels or ctx.author.id == race[2]:
         return True
     
@@ -66,8 +69,18 @@ class AsyncRace(commands.Cog):
     
     @commands.command()
     @commands.guild_only()
-    async def asyncstart(self, ctx, name: str, url_or_preset: str=""):
+    async def asyncstart(self, ctx, *, args):
         db_conn, db_cur = open_db(ctx.guild.id)
+
+        if not args:
+            close_db(db_conn)
+            raise commands.errors.CommandInvokeError("Faltan argumentos para ejecutar el comando.")
+        
+        args_list = args.split(maxsplit=1)
+        name = args_list[0]
+        desc = None
+        if len(args_list) == 2:
+            desc = args_list[1]
 
         if len(name) > 20:
             name = name[:20]
@@ -86,16 +99,24 @@ class AsyncRace(commands.Cog):
         seed = None
         seed_hash = None
         seed_code = None
-        seed_url = url_or_preset
+        seed_url = None
+        preset = desc
 
         if ctx.message.attachments:
-            my_settings = await (ctx.message.attachments[0]).read()
-            seed = await generate_from_yaml(my_settings)
-        elif re.match(r'https://alttpr\.com/h/\w*$', url_or_preset):
-            seed_hash = url_or_preset.split('/')
+            attachment = ctx.message.attachments[0]
+            try:
+                seed = await generate_from_attachment(attachment)
+                preset = attachment.filename
+            except:
+                close_db(db_conn)
+                raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
+
+        elif re.match(r'https://alttpr\.com/h/\w*$', desc):
+            seed_hash = desc.split('/')[-1]
             seed = await generate_from_hash(seed_hash)
+            preset = None
         else:
-            seed = await generate_from_preset(url_or_preset)
+            seed = await generate_from_preset(preset)
 
         if seed:
             seed_hash = seed.hash
@@ -123,10 +144,10 @@ class AsyncRace(commands.Cog):
         results_channel = await server.create_text_channel("{}-results".format(name), category=async_category, overwrites=res_overwrites)
         spoilers_channel = await server.create_text_channel("{}-spoilers".format(name), category=async_category, overwrites=spoiler_overwrites)
 
-        results_text = get_results_text(db_cur, name)
+        results_text = get_results_text(db_cur, submit_channel.id)
         results_msg = await results_channel.send(results_text)
                
-        insert_async(db_cur, name, creator.id, seed_hash, seed_code, seed_url, async_role.id,
+        insert_async(db_cur, name, creator.id, preset, seed_hash, seed_code, seed_url, async_role.id,
                      submit_channel.id, results_channel.id, results_msg.id, spoilers_channel.id)
 
         commit_db(db_conn)
@@ -270,17 +291,17 @@ class AsyncRace(commands.Cog):
         if race[4] == 1:
             update_async_status(db_cur, race[0], 2)
 
-            async_role = ctx.guild.get_role(race[8])
+            async_role = ctx.guild.get_role(race[9])
             await async_role.delete()
 
-            submit_channel = ctx.guild.get_channel(race[9])
+            submit_channel = ctx.guild.get_channel(race[10])
             category = submit_channel.category
             await submit_channel.delete()
 
-            results_channel = ctx.guild.get_channel(race[10])
+            results_channel = ctx.guild.get_channel(race[11])
             await results_channel.delete()
 
-            spoilers_channel = ctx.guild.get_channel(race[12])
+            spoilers_channel = ctx.guild.get_channel(race[13])
             await spoilers_channel.delete()
 
             await category.delete()
@@ -328,18 +349,18 @@ class AsyncRace(commands.Cog):
             return
 
         if race[4] == 0:
-            if re.match(r'^\d?\d:[0-5]\d:[0-5]\d$', time):
+            if re.match(r'\d?\d:[0-5]\d:[0-5]\d$', time):
                 time_arr = [int(x) for x in time.split(':')]
                 time_s = 3600*time_arr[0] + 60*time_arr[1] + time_arr[2]
                 save_async_result(db_cur, race[0], author.id, time_s, collection)
 
-                results_text = get_results_text(db_cur, race[1])
-                results_channel = ctx.guild.get_channel(race[10])
-                results_msg = await results_channel.fetch_message(race[11])
+                results_text = get_results_text(db_cur, race[10])
+                results_channel = ctx.guild.get_channel(race[11])
+                results_msg = await results_channel.fetch_message(race[12])
                 await results_msg.edit(content=results_text)
 
                 await ctx.send("GG {}, tu resultado se ha registrado.".format(author.mention))
-                async_role = ctx.guild.get_role(race[8])
+                async_role = ctx.guild.get_role(race[9])
                 await author.add_roles(async_role)
         
             else:

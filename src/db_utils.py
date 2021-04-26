@@ -21,6 +21,7 @@ def init_db(db_name):
                     Creator INTEGER REFERENCES Players(DiscordId) ON DELETE SET NULL,
                     StartDate TEXT NOT NULL,
                     Status INTEGER CHECK (Status == 0 OR Status == 1 OR Status == 2) NOT NULL DEFAULT 0,
+                    Preset TEXT,
                     SeedHash TEXT,
                     SeedCode TEXT,
                     SeedUrl TEXT,
@@ -72,11 +73,11 @@ def insert_player_if_not_exists(db_cur, discord_id, name, discriminator, mention
                     discriminator, mention))
 
 
-def insert_async(db_cur, name, creator, seed_hash, seed_code, seed_url, role_id, submit_channel, results_channel, results_message, spoilers_channel):
-    db_cur.execute('''INSERT INTO AsyncRaces(Name, Creator, StartDate, Status, SeedHash, SeedCode, SeedUrl, 
+def insert_async(db_cur, name, creator, preset, seed_hash, seed_code, seed_url, role_id, submit_channel, results_channel, results_message, spoilers_channel):
+    db_cur.execute('''INSERT INTO AsyncRaces(Name, Creator, StartDate, Status, Preset, SeedHash, SeedCode, SeedUrl, 
                    RoleId, SubmitChannel, ResultsChannel, ResultsMessage, SpoilersChannel) 
-                   VALUES (?, ?, datetime('now'), 0, ?, ?, ?, ?, ?, ?, ?, ?)''',
-                   (name, creator, seed_hash, seed_code, seed_url, role_id, submit_channel, results_channel, results_message, spoilers_channel))
+                   VALUES (?, ?, datetime('now'), 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                   (name, creator, preset, seed_hash, seed_code, seed_url, role_id, submit_channel, results_channel, results_message, spoilers_channel))
 
 
 def get_active_async_races(db_cur):
@@ -103,10 +104,10 @@ def save_async_result(db_cur, race, player, time, collection_rate):
                    VALUES (?, ?, datetime('now'), ?, ?)''', (race, player, time, collection_rate))
 
 
-def get_results_for_race(db_cur, race):
+def get_results_for_race(db_cur, submit_channel):
     db_cur.execute('''SELECT Players.Name, AsyncResults.Time, AsyncResults.CollectionRate FROM AsyncResults
                    JOIN AsyncRaces ON AsyncRaces.Id = AsyncResults.Race
                    JOIN Players ON Players.DiscordId = AsyncResults.Player
-                   WHERE AsyncRaces.Name = ?
-                   ORDER BY AsyncResults.Time ASC, datetime(AsyncResults.Timestamp) ASC''', (race, ))
+                   WHERE AsyncRaces.SubmitChannel = ?
+                   ORDER BY AsyncResults.Time ASC, datetime(AsyncResults.Timestamp) ASC''', (submit_channel, ))
     return db_cur.fetchall()
