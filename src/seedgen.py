@@ -26,14 +26,25 @@ async def generate_from_attachment(attachment):
     return seed
 
 
-async def generate_from_preset(preset, spoiler=False):
+async def generate_from_preset(preset):
     seed = None
+    spoiler = False
 
-    if Path('rando-settings/{}.yaml'.format(preset)).is_file():
+    preset_name = preset
+    extra = None
+    args_list = preset.split()
+    if len(args_list) > 1:
+        preset_name = args_list[0]
+        extra = args_list[1:]
+
+    if Path('rando-settings/{}.yaml'.format(preset_name)).is_file():         
+        if extra:
+            if "spoiler" in extra:
+                spoiler = True
+
         my_settings = ""
-        with open("rando-settings/{}.yaml".format(preset), "r", encoding="utf-8") as settings_file:
+        with open("rando-settings/{}.yaml".format(preset_name), "r", encoding="utf-8") as settings_file:
             my_settings = settings_file.read()
-        
         seed = await generate_from_yaml(my_settings, spoiler)
     
     return seed
@@ -53,7 +64,7 @@ class Seedgen(commands.Cog):
         self.bot = bot
    
     @commands.command()
-    async def seed(self, ctx, preset: str="", *, extra=""):
+    async def seed(self, ctx, *, preset):
         """
         Crea una seed probablemente horrible. Requiere indicar un preset o adjuntar un YAML de ajustes.
 
@@ -67,14 +78,7 @@ class Seedgen(commands.Cog):
             except:
                 raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
         elif preset:
-            if extra:
-                extra_params = extra.split()
-                if "spoiler" in extra_params:
-                    seed = await generate_from_preset(preset, spoiler=True)
-                else:
-                    seed = await generate_from_preset(preset)
-            else:
-                seed = await generate_from_preset(preset)
+            seed = await generate_from_preset(preset)
         
         if seed:
             await ctx.reply(get_seed_data(seed), mention_author=False)
