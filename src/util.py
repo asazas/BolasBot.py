@@ -10,6 +10,11 @@ class Util(commands.Cog):
     
     @commands.command()
     async def countdown(self, ctx, count: int=10):
+        """
+        Inicia una cuenta atrás.
+
+        Se puede especificar el valor de inicio. Por defecto, es 10. Este valor es también el máximo.
+        """
         count = min(count, 10)
         for i in range(count, 0, -1):
             await ctx.send(str(i))

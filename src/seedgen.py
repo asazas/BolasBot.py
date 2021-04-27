@@ -75,13 +75,17 @@ def is_preset(preset):
 class Seedgen(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        # self.seed
+        # self.seed.help = ("Crea una seed de ALTTPR.\n"
+        #                   "Requiere indicar un preset o adjuntar un YAML de ajustes. Si usas un preset, puedes añadir opciones extra, como spoiler, noqs o pistas.\n"
+        #                   "Si introduces la URL de una seed ya creada, se devolverá su hash.\n")
    
     @commands.command()
     async def seed(self, ctx, *preset):
         """
-        Crea una seed de ALTTPR. Requiere indicar un preset o adjuntar un YAML de ajustes.
+        Crea una seed de ALTTPR.
 
-        Si usas un preset, puedes añadir opciones extra, como spoiler, noqs o pistas.
+        Requiere indicar un preset o adjuntar un YAML de ajustes. Si usas un preset, puedes añadir opciones extra, como spoiler, noqs o pistas.
 
         Si introduces la URL de una seed ya creada, se devolverá su hash.
         """
@@ -118,7 +122,9 @@ class Seedgen(commands.Cog):
     @commands.command()
     async def preset(self, ctx, preset: str=""):
         """
-        Lista presets disponibles. Con el nombre de un preset, da más información.
+        Información sobre presets.
+
+        Usado sin parámetros, lista los presets disponibles. Añadiendo el nombre de un preset, da más detalles sobre el mismo.
         """
         msg = ""
         if not preset or not is_preset(preset):
@@ -153,7 +159,9 @@ class Seedgen(commands.Cog):
     @commands.command()
     async def yaml(self, ctx):
         """
-        Obtener un YAML de configuración de ALTTPR de ejemplo.
+        YAML de configuración de ALTTPR de ejemplo.
+
+        Puede usarse de base para crear YAML personalizados.
         """
         my_yaml = discord.File("res/ejemplo.yaml")
         await ctx.send("Ejemplo de YAML de configuración de ALTTPR.", file=my_yaml)

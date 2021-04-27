@@ -72,6 +72,15 @@ class AsyncRace(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def asyncstart(self, ctx, name: str, *preset):
+        """
+        Inicia una carrera asíncrona.
+
+        Debe asignársele obligatoriamente un nombre.
+
+        Tras el nombre se puede indicar un preset de ALTTPR, en cuyo caso se generará automáticamente una seed. También puede añadirse una descripción cualquiera.
+
+        Este comando crea aleatoriamente los canales de Discord necesarios para alojar la carrera asíncrona.
+        """
         db_conn, db_cur = open_db(ctx.guild.id)
         
         creator = ctx.author
@@ -179,6 +188,13 @@ class AsyncRace(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def end(self, ctx):
+        """
+        Cierra una carrera asíncrona.
+
+        Deja de aceptar nuevos resultados para la carrera asíncrona.
+
+        Solo funciona en el canal "submit" asociado a la carrera, y solamente si lo usa el creador original de la carrera o un moderador.
+        """
         db_conn, db_cur = open_db(ctx.guild.id)
 
         author = ctx.author
@@ -224,6 +240,13 @@ class AsyncRace(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def reopen(self, ctx):
+        """
+        Reabre una carrera asíncrona.
+
+        Comienza a aceptar de nuevo resultados para la carrera asíncrona.
+
+        Solo funciona en el canal "submit" asociado a la carrera, y solamente si lo usa el creador original de la carrera o un moderador.
+        """
         db_conn, db_cur = open_db(ctx.guild.id)
 
         author = ctx.author
@@ -269,6 +292,13 @@ class AsyncRace(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def purge(self, ctx):
+        """
+        Purga una carrera asíncrona.
+
+        Elimina todos los roles y canales asociados a la carrera. Los resultados, si hay alguno, se archivarán en "async-historico"
+
+        Solo funciona en el canal "submit" asociado a la carrera, y solamente si lo usa el creador original de la carrera o un moderador.
+        """
         db_conn, db_cur = open_db(ctx.guild.id)
 
         author = ctx.author
@@ -350,6 +380,13 @@ class AsyncRace(commands.Cog):
     @commands.command()
     @commands.guild_only()
     async def done(self, ctx, time: str, collection: int=0):
+        """
+        Envía un resultado de la carrera asíncrona.
+
+        Requiere indicar un tiempo en formato hh:mm:ss. Opcionalmente, se puede especificar la tasa de colección de ítems para ALTTPR.
+
+        Solo funciona en el canal "submit" asociado a la carrera. Un segundo comando "done" del mismo jugador reemplazará el resultado anterior.
+        """
         message = ctx.message
         await message.delete()
 
@@ -365,7 +402,7 @@ class AsyncRace(commands.Cog):
             return
 
         if race[5] == 0:
-            if re.match(r'\d?\d:[0-5]\d:[0-5]\d$', time):
+            if re.match(r'\d?\d:[0-5]\d:[0-5]\d$', time) and collection >= 0 and collection <= 216:
                 time_arr = [int(x) for x in time.split(':')]
                 time_s = 3600*time_arr[0] + 60*time_arr[1] + time_arr[2]
                 save_async_result(db_cur, race[0], author.id, time_s, collection)
@@ -381,7 +418,7 @@ class AsyncRace(commands.Cog):
         
             else:
                 close_db(db_conn)
-                raise commands.errors.CommandInvokeError("Tiempo inválido.")
+                raise commands.errors.CommandInvokeError("Parámetros inválidos.")
         
         else:
             close_db(db_conn)

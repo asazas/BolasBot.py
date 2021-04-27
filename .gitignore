@@ -2,6 +2,7 @@
 config.ini
 data/
 db-browser-sqlite/
+log/
 
 
 # Byte-compiled / optimized / DLL files
