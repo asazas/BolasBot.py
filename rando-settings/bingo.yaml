@@ -1,14 +1,16 @@
 ---
 goal_name: bingo
 customizer: false
-description: "Ajustes bingo."
+description: "Ajustes bingo: Open 100% localizaciones"
 settings:
+  name: bingo
+  notes: "Ajustes bingo: Open 100% localizaciones"
   allow_quickswap: true
   goal: ganon
   item:
     pool: normal
     functionality: normal
-  lang: en
+  lang: es
   mode: open
   hints: "off"
   weapons: randomized

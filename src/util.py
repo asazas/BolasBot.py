@@ -18,5 +18,5 @@ class Util(commands.Cog):
     
     @countdown.error
     async def countdown_error(self, ctx, error):
-        err_file = discord.File("media/error.png")
+        err_file = discord.File("res/error.png")
         await ctx.reply("Se ha producido un error.", mention_author=False, file=err_file)

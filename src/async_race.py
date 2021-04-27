@@ -173,7 +173,7 @@ class AsyncRace(commands.Cog):
         elif type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("media/error.png")
+        err_file = discord.File("res/error.png")
         await ctx.reply(error_mes, mention_author=False, file=err_file)  
 
 
@@ -218,7 +218,7 @@ class AsyncRace(commands.Cog):
         elif type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("media/error.png")
+        err_file = discord.File("res/error.png")
         await ctx.reply(error_mes, mention_author=False, file=err_file)  
 
 
@@ -263,7 +263,7 @@ class AsyncRace(commands.Cog):
         elif type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("media/error.png")
+        err_file = discord.File("res/error.png")
         await ctx.reply(error_mes, mention_author=False, file=err_file)  
 
 
@@ -324,7 +324,7 @@ class AsyncRace(commands.Cog):
         elif type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("media/error.png")
+        err_file = discord.File("res/error.png")
         await ctx.reply(error_mes, mention_author=False, file=err_file) 
 
 
@@ -389,6 +389,6 @@ class AsyncRace(commands.Cog):
         elif type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("media/error.png")
+        err_file = discord.File("res/error.png")
         await ctx.send(error_mes, file=err_file)
         

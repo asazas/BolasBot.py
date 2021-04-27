@@ -1,10 +1,10 @@
 ---
-goal_name: challenge_cup
+goal_name: standard
 customizer: false
-description: "Ajustes Challenge Cup 2021"
+description: "Estándar"
 settings:
-  name: challenge_cup
-  notes: "Ajustes Challenge Cup 2021"
+  name: standard
+  notes: "Estándar"
   allow_quickswap: true
   goal: ganon
   item:

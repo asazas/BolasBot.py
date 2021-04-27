@@ -9,8 +9,10 @@ import discord
 from discord.ext import commands
 
 
-async def generate_from_yaml(yaml_contents):
+async def generate_from_yaml(yaml_contents, spoiler=False):
     settings_yaml = yaml.load(yaml_contents, Loader=yaml.FullLoader)
+    if spoiler:
+        settings_yaml["settings"]["spoilers"] = True
     seed = await pyz3r.alttpr(settings=settings_yaml['settings'], customizer=settings_yaml['customizer'])
     return seed
 
@@ -24,15 +26,15 @@ async def generate_from_attachment(attachment):
     return seed
 
 
-async def generate_from_preset(preset):
+async def generate_from_preset(preset, spoiler=False):
     seed = None
 
     if Path('rando-settings/{}.yaml'.format(preset)).is_file():
         my_settings = ""
-        with open("rando-settings/{}.yaml".format(preset), "r") as settings_file:
+        with open("rando-settings/{}.yaml".format(preset), "r", encoding="utf-8") as settings_file:
             my_settings = settings_file.read()
         
-        seed = await generate_from_yaml(my_settings)
+        seed = await generate_from_yaml(my_settings, spoiler)
     
     return seed
 
@@ -51,9 +53,11 @@ class Seedgen(commands.Cog):
         self.bot = bot
    
     @commands.command()
-    async def seed(self, ctx, preset: str=""):
+    async def seed(self, ctx, preset: str="", *, extra=""):
         """
-        Crea una seed probablemente horrible.
+        Crea una seed probablemente horrible. Requiere indicar un preset o adjuntar un YAML de ajustes.
+
+        Para generar una seed con spoiler log, añade "spoiler" después del preset.
         """
         seed = None
 
@@ -63,7 +67,14 @@ class Seedgen(commands.Cog):
             except:
                 raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
         elif preset:
-            seed = await generate_from_preset(preset)
+            if extra:
+                extra_params = extra.split()
+                if "spoiler" in extra_params:
+                    seed = await generate_from_preset(preset, spoiler=True)
+                else:
+                    seed = await generate_from_preset(preset)
+            else:
+                seed = await generate_from_preset(preset)
         
         if seed:
             await ctx.reply(get_seed_data(seed), mention_author=False)
@@ -77,6 +88,49 @@ class Seedgen(commands.Cog):
         if type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("media/error.png")
+        err_file = discord.File("res/error.png")
         await ctx.send(error_mes, file=err_file)
+
+    
+    @commands.command()
+    async def preset(self, ctx, preset: str=""):
+        """
+        Lista presets disponibles. Con el nombre de un preset, da más información.
+        """
+        msg = ""
+        if not preset or not Path('rando-settings/{}.yaml'.format(preset)).is_file():
+            preset_files = sorted(Path("rando-settings").glob("*.yaml"))
+            msg += "**Presets disponibles: **`"
+            for i in range(len(preset_files)):
+                msg += preset_files[i].stem
+                if i != len(preset_files) - 1:
+                    msg += ", "
+            msg += "`"
         
+        else:
+            my_settings = ""
+            with open("rando-settings/{}.yaml".format(preset), "r", encoding="utf-8") as settings_file:
+                my_settings = settings_file.read()
+                settings_yaml = yaml.load(my_settings, Loader=yaml.FullLoader)
+                msg += "**{}**: {}".format(settings_yaml["goal_name"], settings_yaml["description"])
+        
+        await ctx.reply(msg, mention_author=False)
+
+    
+    @preset.error
+    async def preset_error(self, ctx, error):
+        error_mes = "Se ha producido un error."
+        if type(error) == commands.errors.CommandInvokeError:
+            error_mes = error.original
+        
+        err_file = discord.File("res/error.png")
+        await ctx.send(error_mes, file=err_file)
+    
+
+    @commands.command()
+    async def yaml(self, ctx):
+        """
+        Obtener un YAML de configuración de ALTTPR de ejemplo.
+        """
+        my_yaml = discord.File("res/ejemplo.yaml")
+        await ctx.send("Ejemplo de YAML de configuración de ALTTPR.", file=my_yaml)

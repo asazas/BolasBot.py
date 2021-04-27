@@ -1,10 +1,10 @@
 ---
-goal_name: challenge_cup
+goal_name: casual
 customizer: false
-description: "Ajustes Challenge Cup 2021"
+description: "Estándar con espada"
 settings:
-  name: challenge_cup
-  notes: "Ajustes Challenge Cup 2021"
+  name: casual
+  notes: "Estándar con espada"
   allow_quickswap: true
   goal: ganon
   item:
@@ -13,7 +13,7 @@ settings:
   lang: es
   mode: standard
   hints: "off"
-  weapons: randomized
+  weapons: assured
   crystals:
     ganon: "7"
     tower: "7"

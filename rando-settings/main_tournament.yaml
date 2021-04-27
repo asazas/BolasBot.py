@@ -1,14 +1,16 @@
 ---
-goal_name: main tournament
+goal_name: main_tournament
 customizer: false
-description: "Ajustes Main Tournament 2021."
+description: "Ajustes Main Tournament 2021: Hard Standard"
 settings:
+  name: main_tournament
+  notes: "Ajustes Main Tournament 2021: Hard Standard"
   allow_quickswap: true
   goal: ganon
   item:
     pool: hard
     functionality: normal
-  lang: en
+  lang: es
   mode: standard
   hints: "off"
   weapons: randomized

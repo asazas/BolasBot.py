@@ -1,17 +1,17 @@
 ---
-goal_name: challenge_cup
+goal_name: open
 customizer: false
-description: "Ajustes Challenge Cup 2021"
+description: "Open"
 settings:
-  name: challenge_cup
-  notes: "Ajustes Challenge Cup 2021"
+  name: open
+  notes: "Open"
   allow_quickswap: true
   goal: ganon
   item:
     pool: normal
     functionality: normal
   lang: es
-  mode: standard
+  mode: open
   hints: "off"
   weapons: randomized
   crystals:
