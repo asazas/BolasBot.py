@@ -5,9 +5,16 @@ import sqlite3
 import discord
 
 
-def init_db(db_name):
+def init_db(db_name, server):
     mydb = sqlite3.connect(db_name)
     cur = mydb.cursor()
+
+    cur.execute('''CREATE TABLE IF NOT EXISTS GlobalVar (
+                ServerId INTEGER NOT NULL PRIMARY KEY,
+                AsyncHistoryChannel INTEGER)''')
+    
+    cur.execute('''INSERT INTO GlobalVar (ServerId, AsyncHistoryChannel)
+                VALUES (?, NULL)''', (server, ))
 
     cur.execute('''CREATE TABLE IF NOT EXISTS Players (
                     DiscordId INTEGER NOT NULL PRIMARY KEY,
@@ -20,6 +27,7 @@ def init_db(db_name):
                     Name TEXT NOT NULL,
                     Creator INTEGER REFERENCES Players(DiscordId) ON DELETE SET NULL,
                     StartDate TEXT NOT NULL,
+                    EndDate TEXT,
                     Status INTEGER CHECK (Status == 0 OR Status == 1 OR Status == 2) NOT NULL DEFAULT 0,
                     Preset TEXT,
                     SeedHash TEXT,
@@ -47,7 +55,7 @@ def init_db(db_name):
 def open_db(server):
     my_db = 'data/{}.db'.format(server)
     if not Path(my_db).is_file():
-        return init_db(my_db)
+        return init_db(my_db, server)
 
     db_conn = sqlite3.connect(my_db)
     db_cur = db_conn.cursor()
@@ -74,9 +82,9 @@ def insert_player_if_not_exists(db_cur, discord_id, name, discriminator, mention
 
 
 def insert_async(db_cur, name, creator, preset, seed_hash, seed_code, seed_url, role_id, submit_channel, results_channel, results_message, spoilers_channel):
-    db_cur.execute('''INSERT INTO AsyncRaces(Name, Creator, StartDate, Status, Preset, SeedHash, SeedCode, SeedUrl, 
+    db_cur.execute('''INSERT INTO AsyncRaces(Name, Creator, StartDate, EndDate, Status, Preset, SeedHash, SeedCode, SeedUrl, 
                    RoleId, SubmitChannel, ResultsChannel, ResultsMessage, SpoilersChannel) 
-                   VALUES (?, ?, datetime('now'), 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                   VALUES (?, ?, datetime('now'), NULL, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                    (name, creator, preset, seed_hash, seed_code, seed_url, role_id, submit_channel, results_channel, results_message, spoilers_channel))
 
 
@@ -97,6 +105,8 @@ def get_async_by_submit(db_cur, subm_channel):
 
 def update_async_status(db_cur, id, status):
     db_cur.execute("UPDATE AsyncRaces SET Status = ? WHERE Id = ?", (status, id))
+    if status == 1:
+        db_cur.execute("UPDATE AsyncRaces SET EndDate = datetime('now') WHERE Id = ?", (id, ))
 
 
 def save_async_result(db_cur, race, player, time, collection_rate):
@@ -111,3 +121,13 @@ def get_results_for_race(db_cur, submit_channel):
                    WHERE AsyncRaces.SubmitChannel = ?
                    ORDER BY AsyncResults.Time ASC, datetime(AsyncResults.Timestamp) ASC''', (submit_channel, ))
     return db_cur.fetchall()
+
+
+def get_async_history_channel(db_cur):
+    db_cur.execute("SELECT AsyncHistoryChannel FROM GlobalVar")
+    return db_cur.fetchone()
+
+
+def set_async_history_channel(db_cur, history_channel):
+    db_cur.execute("UPDATE GlobalVar SET AsyncHistoryChannel = ?", (history_channel, ))
+    return

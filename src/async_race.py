@@ -9,7 +9,7 @@ from discord.ext import commands
 
 from src.db_utils import (open_db, commit_db, close_db, insert_player_if_not_exists,
     insert_async, get_async_by_submit, get_active_async_races, update_async_status, save_async_result,
-    get_results_for_race, get_player_by_id) 
+    get_results_for_race, get_player_by_id, get_async_history_channel, set_async_history_channel) 
 
 from src.seedgen import generate_from_preset, generate_from_hash, generate_from_yaml, generate_from_attachment
 
@@ -41,18 +41,20 @@ def get_async_data(db_cur, submit_channel):
     msg = "__**CARRERA ASÍNCRONA: {}**__\n".format(my_async[1])
     msg += "**Iniciada por: **{}\n".format(player[1])
     msg += "**Fecha de inicio (UTC): **{}\n".format(my_async[3])
-    if my_async[5]:
-        msg += "**Preset / Descripción: **{}\n".format(my_async[5])
+    if my_async[4]:
+        msg += "**Fecha de cierre (UTC): **{}\n".format(my_async[4])
+    if my_async[6]:
+        msg += "**Preset / Descripción: **{}\n".format(my_async[6])
+    if my_async[9]:
+        msg += "**Seed: **{}".format(my_async[9])
     if my_async[8]:
-        msg += "**Seed: **{}".format(my_async[8])
-    if my_async[7]:
-        msg += " ({})".format(my_async[7])
+        msg += " ({})".format(my_async[8])
     
     return msg
 
 
 def check_race_permissions(ctx, race):
-    auth_permissions = ctx.author.permissions_in(ctx.guild.get_channel(race[10]))
+    auth_permissions = ctx.author.permissions_in(ctx.guild.get_channel(race[11]))
     if auth_permissions.manage_channels or ctx.author.id == race[2]:
         return True
     
@@ -78,7 +80,7 @@ class AsyncRace(commands.Cog):
         
         args_list = args.split(maxsplit=1)
         name = args_list[0]
-        desc = None
+        desc = ""
         if len(args_list) == 2:
             desc = args_list[1]
 
@@ -111,10 +113,14 @@ class AsyncRace(commands.Cog):
                 close_db(db_conn)
                 raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
 
-        elif re.match(r'https://alttpr\.com/h/\w*$', desc):
+        elif re.match(r'https://alttpr\.com/h/\w{10}', desc):
+            preset = None
+            desc_list = desc.split(maxsplit=1)
+            if len(desc_list) > 1:
+                desc = desc_list[0]
+                preset = desc_list[1]
             seed_hash = desc.split('/')[-1]
             seed = await generate_from_hash(seed_hash)
-            preset = None
         else:
             seed = await generate_from_preset(preset)
 
@@ -198,7 +204,7 @@ class AsyncRace(commands.Cog):
             close_db(db_conn)
             raise commands.errors.CommandInvokeError("Esta operación solo puede realizarla el creador original de la carrera o un moderador.")
 
-        if race[4] == 0:
+        if race[5] == 0:
             update_async_status(db_cur, race[0], 1)
             commit_db(db_conn)
             close_db(db_conn)
@@ -243,7 +249,7 @@ class AsyncRace(commands.Cog):
             close_db(db_conn)
             raise commands.errors.CommandInvokeError("Esta operación solo puede realizarla el creador original de la carrera o un moderador.")
 
-        if race[4] == 1:
+        if race[5] == 1:
             update_async_status(db_cur, race[0], 0)
             commit_db(db_conn)
             close_db(db_conn)
@@ -288,24 +294,44 @@ class AsyncRace(commands.Cog):
             close_db(db_conn)
             raise commands.errors.CommandInvokeError("Esta operación solo puede realizarla el creador original de la carrera o un moderador.")
 
-        if race[4] == 1:
+        if race[5] == 1:
             update_async_status(db_cur, race[0], 2)
 
-            async_role = ctx.guild.get_role(race[9])
+            # Copia de resultados al historial, si los hay
+            submit_channel = ctx.guild.get_channel(race[11])
+            results = get_results_for_race(db_cur, submit_channel.id)
+            if results:
+                history_channel = get_async_history_channel(db_cur)
+                my_hist_channel = None
+                if not history_channel[0] or not ctx.guild.get_channel(history_channel[0]):
+                    history_overwrites = {
+                        ctx.guild.default_role: discord.PermissionOverwrite(send_messages=False),
+                        ctx.guild.me: discord.PermissionOverwrite(send_messages=True)
+                    }
+                    my_hist_channel = await ctx.guild.create_text_channel("async-historico", overwrites=history_overwrites)
+                    set_async_history_channel(db_cur, my_hist_channel.id)
+                else:
+                    my_hist_channel = ctx.guild.get_channel(history_channel[0])
+
+                hist_msg = get_async_data(db_cur, submit_channel.id) + "\n" + get_results_text(db_cur, submit_channel.id)
+                await my_hist_channel.send(hist_msg)
+
+            # Eliminación de roles y canales            
+
+            async_role = ctx.guild.get_role(race[10])
             await async_role.delete()
 
-            submit_channel = ctx.guild.get_channel(race[10])
             category = submit_channel.category
             await submit_channel.delete()
 
-            results_channel = ctx.guild.get_channel(race[11])
+            results_channel = ctx.guild.get_channel(race[12])
             await results_channel.delete()
 
-            spoilers_channel = ctx.guild.get_channel(race[13])
+            spoilers_channel = ctx.guild.get_channel(race[14])
             await spoilers_channel.delete()
 
             await category.delete()
-            
+
             commit_db(db_conn)
             close_db(db_conn)
         
@@ -348,19 +374,19 @@ class AsyncRace(commands.Cog):
             close_db(db_conn)
             return
 
-        if race[4] == 0:
+        if race[5] == 0:
             if re.match(r'\d?\d:[0-5]\d:[0-5]\d$', time):
                 time_arr = [int(x) for x in time.split(':')]
                 time_s = 3600*time_arr[0] + 60*time_arr[1] + time_arr[2]
                 save_async_result(db_cur, race[0], author.id, time_s, collection)
 
-                results_text = get_results_text(db_cur, race[10])
-                results_channel = ctx.guild.get_channel(race[11])
-                results_msg = await results_channel.fetch_message(race[12])
+                results_text = get_results_text(db_cur, race[11])
+                results_channel = ctx.guild.get_channel(race[12])
+                results_msg = await results_channel.fetch_message(race[13])
                 await results_msg.edit(content=results_text)
 
                 await ctx.send("GG {}, tu resultado se ha registrado.".format(author.mention))
-                async_role = ctx.guild.get_role(race[9])
+                async_role = ctx.guild.get_role(race[10])
                 await author.add_roles(async_role)
         
             else:
