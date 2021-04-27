@@ -37,12 +37,8 @@ async def generate_from_preset(preset):
     noqs = False
     pistas = False
 
-    preset_name = preset
-    extra = None
-    args_list = preset.split()
-    if len(args_list) > 1:
-        preset_name = args_list[0]
-        extra = args_list[1:]
+    preset_name = preset[0]
+    extra = preset[1:]
 
     if Path('rando-settings/{}.yaml'.format(preset_name)).is_file():         
         if extra:
@@ -70,12 +66,18 @@ def get_seed_data(seed):
     return "**URL: **{}\n**Hash: **{}".format(seed.url, " | ".join(seed.code))
 
 
+def is_preset(preset):
+    if Path('rando-settings/{}.yaml'.format(preset)).is_file():
+        return True
+    return False
+
+
 class Seedgen(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
    
     @commands.command()
-    async def seed(self, ctx, *, preset=""):
+    async def seed(self, ctx, *preset):
         """
         Crea una seed de ALTTPR. Requiere indicar un preset o adjuntar un YAML de ajustes.
 
@@ -91,8 +93,8 @@ class Seedgen(commands.Cog):
             except:
                 raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
         elif preset:
-            if re.match(r'https://alttpr\.com/h/\w{10}$', preset):
-                seed_hash = preset.split('/')[-1]
+            if re.match(r'https://alttpr\.com/h/\w{10}$', preset[0]):
+                seed_hash = (preset[0]).split('/')[-1]
                 seed = await generate_from_hash(seed_hash)
             else:
                 seed = await generate_from_preset(preset)
@@ -119,7 +121,7 @@ class Seedgen(commands.Cog):
         Lista presets disponibles. Con el nombre de un preset, da más información.
         """
         msg = ""
-        if not preset or not Path('rando-settings/{}.yaml'.format(preset)).is_file():
+        if not preset or not is_preset(preset):
             preset_files = sorted(Path("rando-settings").glob("*.yaml"))
             msg += "**Presets disponibles: **`"
             for i in range(len(preset_files)):

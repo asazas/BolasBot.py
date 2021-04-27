@@ -11,7 +11,7 @@ from src.db_utils import (open_db, commit_db, close_db, insert_player_if_not_exi
     insert_async, get_async_by_submit, get_active_async_races, update_async_status, save_async_result,
     get_results_for_race, get_player_by_id, get_async_history_channel, set_async_history_channel) 
 
-from src.seedgen import generate_from_preset, generate_from_hash, generate_from_yaml, generate_from_attachment
+from src.seedgen import generate_from_preset, generate_from_hash, generate_from_yaml, generate_from_attachment, is_preset
 
 
 def get_results_text(db_cur, submit_channel):
@@ -44,7 +44,7 @@ def get_async_data(db_cur, submit_channel):
     if my_async[4]:
         msg += "**Fecha de cierre (UTC): **{}\n".format(my_async[4])
     if my_async[6]:
-        msg += "**Preset / Descripción: **{}\n".format(my_async[6])
+        msg += "**Descripción: **{}\n".format(my_async[6])
     if my_async[9]:
         msg += "**Seed: **{}".format(my_async[9])
     if my_async[8]:
@@ -71,21 +71,8 @@ class AsyncRace(commands.Cog):
     
     @commands.command()
     @commands.guild_only()
-    async def asyncstart(self, ctx, *, args):
+    async def asyncstart(self, ctx, name: str, *preset):
         db_conn, db_cur = open_db(ctx.guild.id)
-
-        if not args:
-            close_db(db_conn)
-            raise commands.errors.CommandInvokeError("Faltan argumentos para ejecutar el comando.")
-        
-        args_list = args.split(maxsplit=1)
-        name = args_list[0]
-        desc = ""
-        if len(args_list) == 2:
-            desc = args_list[1]
-
-        if len(name) > 20:
-            name = name[:20]
         
         creator = ctx.author
         insert_player_if_not_exists(db_cur, creator.id, creator.name, creator.discriminator, creator.mention)
@@ -96,33 +83,36 @@ class AsyncRace(commands.Cog):
             close_db(db_conn)
             raise commands.errors.CommandInvokeError("Demasiadas asíncronas activas en el servidor. Contacta a un moderador para purgar alguna.")
 
+        # Comprobación de nombre válido
+        if re.match(r'https://alttpr\.com/h/\w{10}$', name) or is_preset(name):
+            close_db(db_conn)
+            raise commands.errors.CommandInvokeError("El nombre de la carrera no puede ser un preset o una URL de seed.")
+        
+        if len(name) > 20:
+            name = name[:20]
 
         # Crear o procesar seed
         seed = None
         seed_hash = None
         seed_code = None
         seed_url = None
-        preset = desc
+        desc = " ".join(preset)
 
         if ctx.message.attachments:
             attachment = ctx.message.attachments[0]
             try:
                 seed = await generate_from_attachment(attachment)
-                preset = attachment.filename
             except:
                 close_db(db_conn)
                 raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
 
-        elif re.match(r'https://alttpr\.com/h/\w{10}', desc):
-            preset = None
-            desc_list = desc.split(maxsplit=1)
-            if len(desc_list) > 1:
-                desc = desc_list[0]
-                preset = desc_list[1]
-            seed_hash = desc.split('/')[-1]
-            seed = await generate_from_hash(seed_hash)
-        else:
-            seed = await generate_from_preset(preset)
+        elif preset:
+            if re.match(r'https://alttpr\.com/h/\w{10}$', preset[0]):
+                seed = await generate_from_hash((preset[0]).split('/')[-1])
+                if seed:
+                    desc = " ".join(preset[1:])
+            else:
+                seed = await generate_from_preset(preset)
 
         if seed:
             seed_hash = seed.hash
@@ -153,7 +143,7 @@ class AsyncRace(commands.Cog):
         results_text = get_results_text(db_cur, submit_channel.id)
         results_msg = await results_channel.send(results_text)
                
-        insert_async(db_cur, name, creator.id, preset, seed_hash, seed_code, seed_url, async_role.id,
+        insert_async(db_cur, name, creator.id, desc, seed_hash, seed_code, seed_url, async_role.id,
                      submit_channel.id, results_channel.id, results_msg.id, spoilers_channel.id)
 
         commit_db(db_conn)
