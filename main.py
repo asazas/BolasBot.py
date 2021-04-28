@@ -8,8 +8,9 @@ import yaml
 
 from src.seedgen import Seedgen
 from src.util import Util
-from src.async_race import AsyncRace
+from src.racing import AsyncRace
 
+import discord
 from discord.ext import commands  # pip install discord.py
 
 class BolasBot(commands.Bot):
@@ -24,9 +25,11 @@ if __name__ == "__main__":
     handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
     logger.addHandler(handler)
 
+    intents = discord.Intents.default()
+    intents.members = True
     config = ConfigParser()
     config.read('config.ini')
-    bot = BolasBot(command_prefix=config['commands']['prefix'])
+    bot = BolasBot(command_prefix=config['commands']['prefix'], intents=intents)
     bot.add_cog(Seedgen(bot))
     bot.add_cog(Util(bot))
     bot.add_cog(AsyncRace(bot))

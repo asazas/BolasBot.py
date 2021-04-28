@@ -48,6 +48,16 @@ def init_db(db_name, server):
                     CollectionRate INTEGER NOT NULL DEFAULT 0,
                     UNIQUE(Race, Player))
                 ''')
+    
+    cur.execute('''CREATE TABLE IF NOT EXISTS PrivateRaces (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL,
+                Creator INTEGER REFERENCES Players(DiscordId) ON DELETE SET NULL,
+                StartDate TEXT NOT NULL,
+                Status INTEGER CHECK (Status == 2 OR Status == 3) NOT NULL DEFAULT 3,
+                PrivateChannel INT NOT NULL)''')
+
+    mydb.commit()
 
     return (mydb, cur)
 
@@ -130,4 +140,22 @@ def get_async_history_channel(db_cur):
 
 def set_async_history_channel(db_cur, history_channel):
     db_cur.execute("UPDATE GlobalVar SET AsyncHistoryChannel = ?", (history_channel, ))
-    return
+
+
+def insert_private_race(db_cur, name, creator, private_channel):
+    db_cur.execute('''INSERT INTO PrivateRaces (Name, Creator, StartDate, Status, PrivateChannel)
+                   VALUES (?, ?, datetime('now'), 3, ?)''', (name, creator, private_channel))
+
+
+def get_active_private_races(db_cur):
+    db_cur.execute("SELECT * FROM PrivateRaces WHERE Status = 3")
+    return db_cur.fetchall()
+
+
+def get_private_race_by_channel(db_cur, channel):
+    db_cur.execute("SELECT * FROM PrivateRaces WHERE PrivateChannel = ?", (channel, ))
+    return db_cur.fetchone()
+
+
+def update_private_status(db_cur, id, status):
+    db_cur.execute("UPDATE PrivateRaces SET Status = ? WHERE Id = ?", (status, id))
