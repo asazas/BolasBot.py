@@ -22,9 +22,11 @@ def get_results_text(db_cur, submit_channel):
     
     pos = 1
     for res in results:
-        m, s = divmod(res[1], 60)
-        h, m = divmod(m, 60)
-        time_str = "{:02d}:{:02d}:{:02d}".format(h, m, s)
+        time_str = "Forfeit "
+        if res[1] < 359999:
+            m, s = divmod(res[1], 60)
+            h, m = divmod(m, 60)
+            time_str = "{:02d}:{:02d}:{:02d}".format(h, m, s)
         msg += "|" + "-" * 47 + "|\n"
         msg += "| {:4d} | {:20s} | {} | {:4d} |\n".format(pos, res[0], time_str, res[2])
         pos += 1
@@ -385,6 +387,8 @@ class AsyncRace(commands.Cog):
 
         Requiere indicar un tiempo en formato hh:mm:ss. Opcionalmente, se puede especificar la tasa de colección de ítems para ALTTPR.
 
+        Para registrar un forfeit, introducir FF en lugar del tiempo.
+
         Solo funciona en el canal "submit" asociado a la carrera. Un segundo comando "done" del mismo jugador reemplazará el resultado anterior.
         """
         message = ctx.message
@@ -402,6 +406,9 @@ class AsyncRace(commands.Cog):
             return
 
         if race[5] == 0:
+            if time.lower() == "ff":
+                time = "99:59:59"
+                collection = 0
             if re.match(r'\d?\d:[0-5]\d:[0-5]\d$', time) and collection >= 0 and collection <= 216:
                 time_arr = [int(x) for x in time.split(':')]
                 time_s = 3600*time_arr[0] + 60*time_arr[1] + time_arr[2]
