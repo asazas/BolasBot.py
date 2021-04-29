@@ -15,7 +15,7 @@ class Util(commands.Cog):
 
         Se puede especificar el valor de inicio. Por defecto, es 10. Este valor es también el máximo.
         """
-        count = min(count, 10)
+        count = min(abs(count), 10)
         for i in range(count, 0, -1):
             await ctx.send(str(i))
             await asyncio.sleep(0.9)
