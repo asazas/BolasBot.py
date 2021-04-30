@@ -10,7 +10,7 @@ import discord
 from discord.ext import commands
 
 
-async def generate_from_yaml(yaml_contents, spoiler=False, noqs=False, pistas=False):
+async def generate_from_yaml(yaml_contents, spoiler=False, noqs=False, pistas=False, hard=False):
     settings_yaml = yaml.load(yaml_contents, Loader=yaml.FullLoader)
     if spoiler:
         settings_yaml["settings"]["spoilers"] = True
@@ -18,6 +18,8 @@ async def generate_from_yaml(yaml_contents, spoiler=False, noqs=False, pistas=Fa
         settings_yaml["settings"]["allow_quickswap"] = False
     if pistas:
         settings_yaml["settings"]["hints"] = "on"
+    if hard:
+        settings_yaml["settings"]["item"]["pool"] = "hard"
     seed = await pyz3r.alttpr(settings=settings_yaml['settings'], customizer=settings_yaml['customizer'])
     return seed
 
@@ -36,6 +38,7 @@ async def generate_from_preset(preset):
     spoiler = False
     noqs = False
     pistas = False
+    hard = False
 
     preset_name = preset[0]
     extra = preset[1:]
@@ -48,11 +51,13 @@ async def generate_from_preset(preset):
                 noqs = True
             if "pistas" in extra:
                 pistas = True
+            if "hard" in extra:
+                hard = True
 
         my_settings = ""
         with open("rando-settings/{}.yaml".format(preset_name), "r", encoding="utf-8") as settings_file:
             my_settings = settings_file.read()
-        seed = await generate_from_yaml(my_settings, spoiler, noqs, pistas)
+        seed = await generate_from_yaml(my_settings, spoiler, noqs, pistas, hard)
     
     return seed
 
@@ -85,7 +90,9 @@ class Seedgen(commands.Cog):
         """
         Crea una seed de ALTTPR.
 
-        Requiere indicar un preset o adjuntar un YAML de ajustes. Si usas un preset, puedes añadir opciones extra, como spoiler, noqs o pistas.
+        Requiere indicar un preset o adjuntar un YAML de ajustes. Si usas un preset, puedes añadir opciones extra.
+
+        Opciones extra disponibles: spoiler, noqs, pistas, hard.
 
         Si introduces la URL de una seed ya creada, se devolverá su hash.
         """
