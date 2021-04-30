@@ -91,18 +91,19 @@ class Seedgen(commands.Cog):
         """
         seed = None
 
-        if ctx.message.attachments:
-            try:
-                seed = await generate_from_attachment(ctx.message.attachments[0])
-            except:
-                raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
-        elif preset:
-            if re.match(r'https://alttpr\.com/h/\w{10}$', preset[0]):
-                seed_hash = (preset[0]).split('/')[-1]
-                seed = await generate_from_hash(seed_hash)
-            else:
-                seed = await generate_from_preset(preset)
-        
+        async with ctx.typing():
+            if ctx.message.attachments:
+                try:
+                    seed = await generate_from_attachment(ctx.message.attachments[0])
+                except:
+                    raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
+            elif preset:
+                if re.match(r'https://alttpr\.com/h/\w{10}$', preset[0]):
+                    seed_hash = (preset[0]).split('/')[-1]
+                    seed = await generate_from_hash(seed_hash)
+                else:
+                    seed = await generate_from_preset(preset)
+            
         if seed:
             await ctx.reply(get_seed_data(seed), mention_author=False)
         else:

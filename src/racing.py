@@ -18,8 +18,8 @@ from src.seedgen import generate_from_preset, generate_from_hash, generate_from_
 def get_results_text(db_cur, submit_channel):
     results = get_results_for_race(db_cur, submit_channel)
     msg = "```\n"
-    msg += "+" + "-"*47 + "+\n"
-    msg += "| Pos. | Jugador              | Tiempo   | Col. |\n"
+    msg += "+" + "-"*41 + "+\n"
+    msg += "| Rk | Jugador           | Tiempo   | CR  |\n"
     
     pos = 1
     for res in results:
@@ -28,11 +28,11 @@ def get_results_text(db_cur, submit_channel):
             m, s = divmod(res[1], 60)
             h, m = divmod(m, 60)
             time_str = "{:02d}:{:02d}:{:02d}".format(h, m, s)
-        msg += "|" + "-" * 47 + "|\n"
-        msg += "| {:4d} | {:20s} | {} | {:4d} |\n".format(pos, res[0], time_str, res[2])
+        msg += "|" + "-" * 41 + "|\n"
+        msg += "| {:2d} | {:17s} | {} | {:3d} |\n".format(pos, res[0][:17], time_str, res[2])
         pos += 1
     
-    msg += "+" + "-"*47 + "+\n"
+    msg += "+" + "-"*41 + "+\n"
     msg += "```"
     return msg
 
@@ -109,21 +109,22 @@ class AsyncRace(commands.Cog):
         seed_url = None
         desc = " ".join(preset)
 
-        if ctx.message.attachments:
-            attachment = ctx.message.attachments[0]
-            try:
-                seed = await generate_from_attachment(attachment)
-            except:
-                close_db(db_conn)
-                raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
+        async with ctx.typing():
+            if ctx.message.attachments:
+                attachment = ctx.message.attachments[0]
+                try:
+                    seed = await generate_from_attachment(attachment)
+                except:
+                    close_db(db_conn)
+                    raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
 
-        elif preset:
-            if re.match(r'https://alttpr\.com/h/\w{10}$', preset[0]):
-                seed = await generate_from_hash((preset[0]).split('/')[-1])
-                if seed:
-                    desc = " ".join(preset[1:])
-            else:
-                seed = await generate_from_preset(preset)
+            elif preset:
+                if re.match(r'https://alttpr\.com/h/\w{10}$', preset[0]):
+                    seed = await generate_from_hash((preset[0]).split('/')[-1])
+                    if seed:
+                        desc = " ".join(preset[1:])
+                else:
+                    seed = await generate_from_preset(preset)
 
         if seed:
             seed_hash = seed.hash
@@ -347,8 +348,8 @@ class AsyncRace(commands.Cog):
                 else:
                     my_hist_channel = ctx.guild.get_channel(history_channel[0])
 
-                hist_msg = get_async_data(db_cur, submit_channel.id) + "\n" + get_results_text(db_cur, submit_channel.id)
-                await my_hist_channel.send(hist_msg)
+                await my_hist_channel.send(get_async_data(db_cur, submit_channel.id))
+                await my_hist_channel.send(get_results_text(db_cur, submit_channel.id))
 
             # Eliminación de roles y canales            
 
