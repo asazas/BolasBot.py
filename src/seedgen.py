@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+from random import randint
 
 import yaml     # pip install pyyaml
 
@@ -123,7 +124,7 @@ class Seedgen(commands.Cog):
         if type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("res/error.png")
+        err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
         await ctx.send(error_mes, file=err_file)
 
     
@@ -160,7 +161,7 @@ class Seedgen(commands.Cog):
         if type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("res/error.png")
+        err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
         await ctx.send(error_mes, file=err_file)
     
 

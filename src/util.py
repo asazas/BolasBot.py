@@ -1,4 +1,5 @@
 import asyncio
+from random import randint
 
 import discord
 
@@ -23,5 +24,5 @@ class Util(commands.Cog):
     
     @countdown.error
     async def countdown_error(self, ctx, error):
-        err_file = discord.File("res/error.png")
+        err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
         await ctx.reply("Se ha producido un error.", mention_author=False, file=err_file)

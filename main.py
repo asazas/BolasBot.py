@@ -9,6 +9,7 @@ import yaml
 from src.seedgen import Seedgen
 from src.util import Util
 from src.racing import AsyncRace
+from src.memes import Memes
 
 import discord
 from discord.ext import commands  # pip install discord.py
@@ -33,6 +34,7 @@ if __name__ == "__main__":
     bot.add_cog(Seedgen(bot))
     bot.add_cog(Util(bot))
     bot.add_cog(AsyncRace(bot))
+    bot.add_cog(Memes(bot))
 
     Path('data').mkdir(parents=True, exist_ok=True)
 

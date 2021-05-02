@@ -2,6 +2,7 @@
 
 import re
 import time
+from random import randint
 
 import discord
 
@@ -181,7 +182,7 @@ class AsyncRace(commands.Cog):
         elif type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("res/error.png")
+        err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
         await ctx.reply(error_mes, mention_author=False, file=err_file)  
 
 
@@ -233,7 +234,7 @@ class AsyncRace(commands.Cog):
         elif type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("res/error.png")
+        err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
         await ctx.reply(error_mes, mention_author=False, file=err_file)  
 
 
@@ -285,7 +286,7 @@ class AsyncRace(commands.Cog):
         elif type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("res/error.png")
+        err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
         await ctx.reply(error_mes, mention_author=False, file=err_file)  
 
 
@@ -385,7 +386,7 @@ class AsyncRace(commands.Cog):
         elif type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("res/error.png")
+        err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
         await ctx.reply(error_mes, mention_author=False, file=err_file) 
 
 
@@ -462,7 +463,7 @@ class AsyncRace(commands.Cog):
         elif type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("res/error.png")
+        err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
         await ctx.send(error_mes, file=err_file)
 
 
@@ -551,5 +552,5 @@ class AsyncRace(commands.Cog):
         elif type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
         
-        err_file = discord.File("res/error.png")
+        err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
         await ctx.reply(error_mes, mention_author=False, file=err_file)  
