@@ -95,7 +95,7 @@ class AsyncRace(commands.Cog):
             raise commands.errors.CommandInvokeError("Demasiadas asíncronas activas en el servidor. Contacta a un moderador para purgar alguna.")
 
         # Comprobación de nombre válido
-        if re.match(r'https://alttpr\.com/h/\w{10}$', name) or is_preset(name):
+        if re.match(r'https://alttpr\.com/([a-z]{2}/)?h/\w{10}$', name) or is_preset(name):
             close_db(db_conn)
             raise commands.errors.CommandInvokeError("El nombre de la carrera no puede ser un preset o una URL de seed.")
         
@@ -119,7 +119,7 @@ class AsyncRace(commands.Cog):
                     raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
 
             elif preset:
-                if re.match(r'https://alttpr\.com/h/\w{10}$', preset[0]):
+                if re.match(r'https://alttpr\.com/([a-z]{2}/)?h/\w{10}$', preset[0]):
                     seed = await generate_from_hash((preset[0]).split('/')[-1])
                     if seed:
                         desc = " ".join(preset[1:])

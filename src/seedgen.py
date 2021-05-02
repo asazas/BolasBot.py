@@ -105,7 +105,7 @@ class Seedgen(commands.Cog):
                 except:
                     raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el YAML introducido sea válido.")
             elif preset:
-                if re.match(r'https://alttpr\.com/h/\w{10}$', preset[0]):
+                if re.match(r'https://alttpr\.com/([a-z]{2}/)?h/\w{10}$', preset[0]):
                     seed_hash = (preset[0]).split('/')[-1]
                     seed = await generate_from_hash(seed_hash)
                 else:
