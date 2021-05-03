@@ -11,15 +11,19 @@ import discord
 from discord.ext import commands
 
 
-async def generate_from_yaml(yaml_contents, spoiler=False, noqs=False, pistas=False, hard=False):
+async def generate_from_yaml(yaml_contents, extra):
     settings_yaml = yaml.load(yaml_contents, Loader=yaml.FullLoader)
-    if spoiler:
+    if "spoiler" in extra:
         settings_yaml["settings"]["spoilers"] = True
-    if noqs:
+    if "noqs" in extra:
         settings_yaml["settings"]["allow_quickswap"] = False
-    if pistas:
+    if "pistas" in extra:
         settings_yaml["settings"]["hints"] = "on"
-    if hard:
+    if "ad" in extra:
+        settings_yaml["settings"]["goal"] = "dungeons"
+    if "mc" in extra:
+        settings_yaml["settings"]["dungeon_items"] = "mc"
+    if "hard" in extra:
         settings_yaml["settings"]["item"]["pool"] = "hard"
     seed = await pyz3r.alttpr(settings=settings_yaml['settings'], customizer=settings_yaml['customizer'])
     return seed
@@ -58,7 +62,7 @@ async def generate_from_preset(preset):
         my_settings = ""
         with open("rando-settings/{}.yaml".format(preset_name), "r", encoding="utf-8") as settings_file:
             my_settings = settings_file.read()
-        seed = await generate_from_yaml(my_settings, spoiler, noqs, pistas, hard)
+        seed = await generate_from_yaml(my_settings, extra)
     
     return seed
 
@@ -81,11 +85,8 @@ def is_preset(preset):
 class Seedgen(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # self.seed
-        # self.seed.help = ("Crea una seed de ALTTPR.\n"
-        #                   "Requiere indicar un preset o adjuntar un YAML de ajustes. Si usas un preset, puedes añadir opciones extra, como spoiler, noqs o pistas.\n"
-        #                   "Si introduces la URL de una seed ya creada, se devolverá su hash.\n")
-   
+
+
     @commands.command()
     async def seed(self, ctx, *preset):
         """
@@ -93,7 +94,7 @@ class Seedgen(commands.Cog):
 
         Requiere indicar un preset o adjuntar un YAML de ajustes. Si usas un preset, puedes añadir opciones extra.
 
-        Opciones extra disponibles: spoiler, noqs, pistas, hard.
+        Opciones extra disponibles: spoiler, noqs, pistas, ad, mc, hard.
 
         Si introduces la URL de una seed ya creada, se devolverá su hash.
         """
