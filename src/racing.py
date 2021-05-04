@@ -165,7 +165,9 @@ class AsyncRace(commands.Cog):
 
         data_msg = await submit_channel.send(async_data)
         await data_msg.pin()
-        await submit_channel.send("Por favor, mantened este canal lo más limpio posible y SIN SPOILERS.")
+        await submit_channel.send("Enviad resultados usando el comando: `!done hh:mm:ss CR`\n"
+                                  "Por ejemplo: `!done 1:40:35 144`\n"
+                                  "Por favor, mantened este canal lo más limpio posible y SIN SPOILERS.")
 
         text_ans = 'Abierta carrera asíncrona con nombre: {}\nEnvía resultados en {}'.format(name, submit_channel.mention)
 
