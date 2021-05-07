@@ -1,10 +1,10 @@
 ---
 goal_name: main_tournament
 customizer: false
-description: "Ajustes Main Tournament 2021: Hard Standard"
+description: "Igual que Standard, pero con hard item pool. Ajustes usados en el torneo Main Tournament 2021."
 settings:
   name: main_tournament
-  notes: "Ajustes Main Tournament 2021: Hard Standard"
+  notes: "Main Tournament 2021"
   allow_quickswap: true
   goal: ganon
   item:

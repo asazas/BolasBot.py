@@ -1,10 +1,10 @@
 ---
 goal_name: casual
 customizer: false
-description: "Estándar con espada"
+description: "Igual que Standard, pero teniendo la espada de nivel 1 desde el inicio. El tío no necesariamente otorga un arma para el escape."
 settings:
   name: casual
-  notes: "Estándar con espada"
+  notes: "Casual"
   allow_quickswap: true
   goal: ganon
   item:

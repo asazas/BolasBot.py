@@ -22,16 +22,17 @@ def get_results_text(db_cur, submit_channel):
     msg += "+" + "-"*41 + "+\n"
     msg += "| Rk | Jugador           | Tiempo   | CR  |\n"
     
-    pos = 1
-    for res in results:
-        time_str = "Forfeit "
-        if res[1] < 359999:
-            m, s = divmod(res[1], 60)
-            h, m = divmod(m, 60)
-            time_str = "{:02d}:{:02d}:{:02d}".format(h, m, s)
+    if results:
         msg += "|" + "-" * 41 + "|\n"
-        msg += "| {:2d} | {:17s} | {} | {:3d} |\n".format(pos, res[0][:17], time_str, res[2])
-        pos += 1
+        pos = 1
+        for res in results:
+            time_str = "Forfeit "
+            if res[1] < 359999:
+                m, s = divmod(res[1], 60)
+                h, m = divmod(m, 60)
+                time_str = "{:02d}:{:02d}:{:02d}".format(h, m, s)
+            msg += "| {:2d} | {:17s} | {} | {:3d} |\n".format(pos, res[0][:17], time_str, res[2])
+            pos += 1
     
     msg += "+" + "-"*41 + "+\n"
     msg += "```"
@@ -72,7 +73,7 @@ class AsyncRace(commands.Cog):
         self.bot = bot
 
     
-    @commands.command()
+    @commands.command(aliases=["async"])
     @commands.guild_only()
     async def asyncstart(self, ctx, name: str, *preset):
         """

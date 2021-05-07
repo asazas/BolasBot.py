@@ -1,10 +1,10 @@
 ---
 goal_name: ambrosia
 customizer: true
-description: "Estándar con espada, jefes tienen ítems, tío spoilea botas"
+description: "Igual que el modo Standard, pero comenzando con la espada de nivel 1, y el tío revela la localización de las botas al inicio. Además, los drops de los jefes de las mazmorras no serán nunca ítems de mazmorra (mapas, brújulas, o llaves pequeñas o grandes.)"
 settings:
   name: ambrosia
-  notes: "Estándar con espada, jefes tienen ítems, tío spoilea botas"
+  notes: "Ambrosia"
   allow_quickswap: true
   goal: ganon
   item:

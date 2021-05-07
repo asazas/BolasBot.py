@@ -21,8 +21,6 @@ async def generate_from_yaml(yaml_contents, extra):
         settings_yaml["settings"]["hints"] = "on"
     if "ad" in extra:
         settings_yaml["settings"]["goal"] = "dungeons"
-    if "mc" in extra:
-        settings_yaml["settings"]["dungeon_items"] = "mc"
     if "hard" in extra:
         settings_yaml["settings"]["item"]["pool"] = "hard"
     seed = await pyz3r.alttpr(settings=settings_yaml['settings'], customizer=settings_yaml['customizer'])
@@ -39,26 +37,10 @@ async def generate_from_attachment(attachment):
 
 
 async def generate_from_preset(preset):
-    seed = None
-    spoiler = False
-    noqs = False
-    pistas = False
-    hard = False
-
     preset_name = preset[0]
     extra = preset[1:]
 
-    if Path('rando-settings/{}.yaml'.format(preset_name)).is_file():         
-        if extra:
-            if "spoiler" in extra:
-                spoiler = True
-            if "noqs" in extra:
-                noqs = True
-            if "pistas" in extra:
-                pistas = True
-            if "hard" in extra:
-                hard = True
-
+    if Path('rando-settings/{}.yaml'.format(preset_name)).is_file():
         my_settings = ""
         with open("rando-settings/{}.yaml".format(preset_name), "r", encoding="utf-8") as settings_file:
             my_settings = settings_file.read()
@@ -94,7 +76,12 @@ class Seedgen(commands.Cog):
 
         Requiere indicar un preset o adjuntar un YAML de ajustes. Si usas un preset, puedes añadir opciones extra.
 
-        Opciones extra disponibles: spoiler, noqs, pistas, ad, mc, hard.
+        Opciones extra disponibles: 
+         - spoiler: Hace que el spoiler log de la seed esté disponible.
+         - noqs: Deshabilita quickswap.
+         - pistas: Las casillas telepáticas pueden dar pistas sobre localizaciones de ítems.
+         - ad: All Dungeons, Ganon solo será vulnerable al completar todas las mazmorras del juego, incluyendo Torre de Agahnim.
+         - hard: Cambia el item pool a hard, reduciendo el número máximo de corazones, espadas e ítems de seguridad.
 
         Si introduces la URL de una seed ya creada, se devolverá su hash.
         """
@@ -129,7 +116,7 @@ class Seedgen(commands.Cog):
         await ctx.send(error_mes, file=err_file)
 
     
-    @commands.command()
+    @commands.command(aliases=["presets"])
     async def preset(self, ctx, preset: str=""):
         """
         Información sobre presets.

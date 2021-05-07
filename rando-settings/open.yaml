@@ -1,7 +1,7 @@
 ---
 goal_name: open
 customizer: false
-description: "Open"
+description: "La secuencia inicial de escape está completada por defecto, por lo que se puede comenzar la partida desde casa de Link o desde el santuario. Link empieza sin armas ni otros ítems."
 settings:
   name: open
   notes: "Open"

@@ -1,10 +1,10 @@
 ---
 goal_name: casualboots
 customizer: true
-description: "Estándar con espada y botas iniciales"
+description: "Igual que Standard, pero comenzando con la espada de nivel 1 y las botas de Pegaso."
 settings:
   name: casualboots
-  notes: "Estándar con espada y botas iniciales"
+  notes: "Casual Boots"
   allow_quickswap: true
   goal: ganon
   item:
