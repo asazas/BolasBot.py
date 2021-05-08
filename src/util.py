@@ -19,7 +19,7 @@ class Util(commands.Cog):
         count = min(abs(count), 10)
         for i in range(count, 0, -1):
             await ctx.send(str(i))
-            await asyncio.sleep(0.9)
+            await asyncio.sleep(0.8)
         await ctx.send("GO!")
     
     @countdown.error
