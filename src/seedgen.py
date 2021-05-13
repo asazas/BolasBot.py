@@ -1,3 +1,4 @@
+from io import open_code
 from pathlib import Path
 import re
 from random import randint
@@ -9,6 +10,15 @@ import pyz3r    # pip install pyz3r
 import discord
 
 from discord.ext import commands
+
+
+def add_default_customizer(settings_yaml):
+    if "l" not in settings_yaml["settings"]:
+        custom_settings = ""
+        with open('res/default-customizer.yaml', "r", encoding="utf-8") as custom_file:
+            custom_settings = custom_file.read()
+        custom_yaml = yaml.load(custom_settings, Loader=yaml.FullLoader)
+        settings_yaml["settings"] = {**settings_yaml["settings"], **custom_yaml}
 
 
 async def generate_from_yaml(yaml_contents, extra):
@@ -23,6 +33,14 @@ async def generate_from_yaml(yaml_contents, extra):
         settings_yaml["settings"]["goal"] = "dungeons"
     if "hard" in extra:
         settings_yaml["settings"]["item"]["pool"] = "hard"
+    if "botas" in extra:
+        add_default_customizer(settings_yaml)
+        settings_yaml['customizer'] = True
+        if "PegasusBoots" not in settings_yaml['settings']['eq']:
+            settings_yaml['settings']['eq'].append("PegasusBoots")
+            if settings_yaml['settings']['custom']['item']['count']['PegasusBoots'] > 0:
+                settings_yaml['settings']['custom']['item']['count']['PegasusBoots'] -= 1
+                settings_yaml['settings']['custom']['item']['count']['TwentyRupees2'] += 1
     seed = await pyz3r.alttpr(settings=settings_yaml['settings'], customizer=settings_yaml['customizer'])
     return seed
 
@@ -54,7 +72,9 @@ async def generate_from_hash(my_hash):
     return seed
 
 
-def get_seed_data(seed):
+def get_seed_data(seed, preset=""):
+    if preset:
+        return "**Preset: **{}\n**URL: **{}\n**Hash: **{}".format(preset, seed.url, " | ".join(seed.code))
     return "**URL: **{}\n**Hash: **{}".format(seed.url, " | ".join(seed.code))
 
 
@@ -82,10 +102,12 @@ class Seedgen(commands.Cog):
          - pistas: Las casillas telepáticas pueden dar pistas sobre localizaciones de ítems.
          - ad: All Dungeons, Ganon solo será vulnerable al completar todas las mazmorras del juego, incluyendo Torre de Agahnim.
          - hard: Cambia el item pool a hard, reduciendo el número máximo de corazones, espadas e ítems de seguridad.
+         - botas: Las Botas de Pegaso estarán equipadas al inicio de la partida.
 
         Si introduces la URL de una seed ya creada, se devolverá su hash.
         """
         seed = None
+        preset_used = False
 
         async with ctx.typing():
             if ctx.message.attachments:
@@ -99,9 +121,13 @@ class Seedgen(commands.Cog):
                     seed = await generate_from_hash(seed_hash)
                 else:
                     seed = await generate_from_preset(preset)
+                    preset_used = True
             
         if seed:
-            await ctx.reply(get_seed_data(seed), mention_author=False)
+            if preset_used:
+                await ctx.reply(get_seed_data(seed, " ".join(preset)), mention_author=False)
+            else:
+                await ctx.reply(get_seed_data(seed), mention_author=False)
         else:
             raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el preset o YAML introducido sea válido.")
 

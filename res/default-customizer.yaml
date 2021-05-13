@@ -1,0 +1,275 @@
+l: {}
+eq:     # Ítems disponibles al inicio de la partida
+  - BossHeartContainer
+  - BossHeartContainer
+  - BossHeartContainer
+drops:    # Secuencias de drops de enemigos (prize packs)
+  "0":
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+  "1":
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+  "2":
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+  "3":
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+  "4":
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+  "5":
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+  "6":
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+    - auto_fill
+  crab:
+    - auto_fill
+    - auto_fill
+  fish:
+    - auto_fill
+  pull:
+    - auto_fill
+    - auto_fill
+    - auto_fill
+  stun:
+    - auto_fill
+custom:
+  customPrizePacks: false   # Habilitar drops personalizados (false / true)
+  drop:
+    count:    # Rellenar prize packs aleatoriamente con este número de cada drop
+      Bee: 0
+      Fairy: 1
+      Heart: 13
+      BeeGood: 0
+      RupeeRed: 6
+      RupeeBlue: 7
+      RupeeGreen: 9
+      BombRefill1: 7
+      BombRefill4: 1
+      BombRefill8: 2
+      ArrowRefill5: 5
+      ArrowRefill10: 3
+      MagicRefillFull: 3
+      MagicRefillSmall: 6
+  item:   # Colocar este número de cada ítem en el mundo
+    count:
+      Bow: 0
+      Bomb: 0
+      Cape: 1
+      Lamp: 1
+      Arrow: 1
+      Ether: 1
+      Heart: 0
+      KeyA1: 2
+      KeyA2: 4
+      KeyD1: 6
+      KeyD2: 1
+      KeyD3: 3
+      KeyD4: 1
+      KeyD5: 2
+      KeyD6: 3
+      KeyD7: 4
+      KeyH1: 0
+      KeyH2: 1
+      KeyP1: 0
+      KeyP2: 1
+      KeyP3: 1
+      MapA1: 0
+      MapA2: 1
+      MapD1: 1
+      MapD2: 1
+      MapD3: 1
+      MapD4: 1
+      MapD5: 1
+      MapD6: 1
+      MapD7: 1
+      MapH1: 0
+      MapH2: 1
+      MapP1: 1
+      MapP2: 1
+      MapP3: 1
+      Quake: 1
+      Bombos: 1
+      Bottle: 0
+      Hammer: 1
+      IceRod: 1
+      Powder: 1
+      Rupoor: 0
+      Shovel: 1
+      FireRod: 1
+      L1Sword: 0
+      L3Sword: 0
+      L4Sword: 0
+      TwentyRupees2: 0
+      RedMail: 0
+      BigKeyA1: 0
+      BigKeyA2: 1
+      BigKeyD1: 1
+      BigKeyD2: 1
+      BigKeyD3: 1
+      BigKeyD4: 1
+      BigKeyD5: 1
+      BigKeyD6: 1
+      BigKeyD7: 1
+      BigKeyH1: 0
+      BigKeyH2: 0
+      BigKeyP1: 1
+      BigKeyP2: 1
+      BigKeyP3: 1
+      BlueMail: 0
+      Flippers: 1
+      Hookshot: 1
+      Mushroom: 1
+      OneRupee: 2
+      RedClock: 0
+      TenBombs: 1
+      Triforce: 0
+      BlueClock: 0
+      Boomerang: 1
+      CompassA1: 0
+      CompassA2: 1
+      CompassD1: 1
+      CompassD2: 1
+      CompassD3: 1
+      CompassD4: 1
+      CompassD5: 1
+      CompassD6: 1
+      CompassD7: 1
+      CompassH1: 0
+      CompassH2: 0
+      CompassP1: 1
+      CompassP2: 1
+      CompassP3: 1
+      HalfMagic: 1
+      MoonPearl: 1
+      RedShield: 0
+      TenArrows: 12
+      BlueShield: 0
+      FiveRupees: 4
+      GreenClock: 0
+      PowerGlove: 0
+      SmallMagic: 0
+      ThreeBombs: 16
+      TitansMitt: 0
+      CaneOfByrna: 1
+      FiftyRupees: 7
+      MagicMirror: 1
+      MasterSword: 0
+      BombUpgrade5: 0
+      BookOfMudora: 1
+      BowAndArrows: 0
+      MirrorShield: 0
+      PegasusBoots: 1
+      PieceOfHeart: 24
+      QuarterMagic: 0
+      RedBoomerang: 1
+      TwentyRupees: 28
+      ArrowUpgrade5: 0
+      BombUpgrade10: 0
+      BottleWithBee: 0
+      CaneOfSomaria: 1
+      OcarinaActive: 0
+      TriforcePiece: 0  # Piezas de trifuerza disponibles, importantes en triforce hunt
+      ArrowUpgrade10: 0
+      BugCatchingNet: 1
+      HeartContainer: 1
+      ProgressiveBow: 2
+      BottleWithFairy: 0
+      OcarinaInactive: 1
+      BottleWithRandom: 4
+      L1SwordAndShield: 0
+      OneHundredRupees: 1
+      ProgressiveArmor: 2
+      ProgressiveGlove: 2
+      ProgressiveSword: 4
+      BottleWithGoldBee: 0
+      ProgressiveShield: 3
+      BossHeartContainer: 10
+      BowAndSilverArrows: 0
+      SilverArrowUpgrade: 0
+      ThreeHundredRupees: 5
+      BottleWithRedPotion: 0
+      BottleWithBluePotion: 0
+      BottleWithGreenPotion: 0
+  canOWYBA: false   # Lógica puede requerir overworld YBA (false / true)
+  canBombJump: false  # Lógica puede requerir bomb jumps (false / true)
+  canBootsClip: false # Lógica puede requerir clips con botas en overworld (false / true)
+  canBunnySurf: false # Lógica puede requerir caminar sobre el agua en estado de conejo (false / true)
+  canWaterWalk: false # Lógica puede requerir caminar sobre el agua (false / true)
+  rom.rupeeBow: false # El arco consume rupias en lugar de flechas
+  canMirrorClip: false  # Lógica puede requerir mirror clips (false / true)
+  canMirrorWrap: false  # Lógica puede requerir mirror wraps (false / true)
+  canSuperBunny: false  # Lógica puede requerir super bunny (false / true)
+  canSuperSpeed: false  # Lógica puede requerir super speed (false / true)
+  rom.timerMode: "off"  # Timer interno ("off" / "stopwatch" / "countdown-ohko" / "countdown-continue" / "countdown-stop")
+  canBunnyRevive: false # Lógica puede requerir bunny revival (false / true)
+  canFakeFlipper: false # Lógica puede requerir fake flippers (false / true)
+  rom.timerStart: ""  # Si hay timer interno, valor inicial
+  region.wildKeys: false  # Las llaves pequeñas pueden estar randomizadas fuera de sus mazmorras (false / true)
+  region.wildMaps: false  # Los mapas pueden estar randomizados fuera de sus mazmorras (false / true)
+  rom.genericKeys: false  # Las llaves pequeñas funcionan en cualquier mazmorra (false / true)
+  rom.mapOnPickup: false  # Solo se revela el premio de una mazmorra al recoger el mapa (false / true)
+  canDungeonRevive: false # Lógica puede requerir revivir como Link en una mazmorra sin perla de la luna (false / true)
+  prize.crossWorld: true  # Los colgantes pueden estar en el mundo oscuro y los cristales en el mundo de la luz (true / false)
+  rom.dungeonCount: "off" # Mostrar el número de ítems obtenidos en la mazmorra ("on" / "pickup" / "off")
+  rom.freeItemMenu: false # Información de llaves recogidas se muestra en el menú (false / true)
+  rom.freeItemText: false # Mostrar una caja de texto al recoger llaves, mapas o brújulas que indique a qué mazmorra pertenecen (false / true)
+  canOneFrameClipOW: false  # Lógica puede requerir clips de un frame en overworld (false / true)
+  item.require.Lamp: false  # Lógica puede requerir salas oscuras sin luz (false / true)
+  item.value.Rupoor: ""   # Cantidad de rupias que quita un rupoor
+  item.Goal.Required: ""  # En triforce hunt, número de piezas requeridas para completar la partida.
+  region.wildBigKeys: false # Las llaves grandes pueden estar randomizadas fuera de sus mazmorras (false / true)
+  canWaterFairyRevive: false  # Lógica puede requerir super speed (false / true)
+  item.value.RedClock: "" # Si hay timer interno, valor de relojes rojos
+  spoil.BootsLocation: false  # El tío spoilea la localización de las botas en modo standard (false / true)
+  item.value.BlueClock: ""  # Si hay timer interno, valor de relojes azules
+  region.wildCompasses: false # Las brújulas pueden estar randomizadas fuera de sus mazmorras (false / true)
+  item.value.GreenClock: ""   # Si hay timer interno, valor de relojes verdes
+  prize.shuffleCrystals: true # Mezclar cristales (true / false)
+  prize.shufflePendants: true # Mezclar colgantes (true / false)
+  region.bossNormalLocation: true # Los jefes pueden dropear llaves, mapas o brújulas (true / false)

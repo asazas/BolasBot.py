@@ -2,9 +2,6 @@ from pathlib import Path
 
 import sqlite3
 
-import discord
-
-
 def init_db(db_name, server):
     mydb = sqlite3.connect(db_name)
     cur = mydb.cursor()

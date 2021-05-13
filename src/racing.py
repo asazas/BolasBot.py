@@ -1,7 +1,4 @@
-# pylint: disable=import-error
-
 import re
-import time
 from random import randint
 
 import discord
@@ -13,7 +10,7 @@ from src.db_utils import (open_db, commit_db, close_db, insert_player_if_not_exi
     get_results_for_race, get_player_by_id, get_async_history_channel, set_async_history_channel,
     insert_private_race, get_active_private_races, get_private_race_by_channel, update_private_status) 
 
-from src.seedgen import generate_from_preset, generate_from_hash, generate_from_yaml, generate_from_attachment, is_preset
+from src.seedgen import generate_from_preset, generate_from_hash, generate_from_attachment, is_preset
 
 
 def get_results_text(db_cur, submit_channel):
