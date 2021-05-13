@@ -1,7 +1,6 @@
-from io import open_code
 from pathlib import Path
 import re
-from random import randint
+from random import randint, choice
 
 import yaml     # pip install pyyaml
 
@@ -174,6 +173,44 @@ class Seedgen(commands.Cog):
         error_mes = "Se ha producido un error."
         if type(error) == commands.errors.CommandInvokeError:
             error_mes = error.original
+        
+        err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
+        await ctx.send(error_mes, file=err_file)
+    
+
+    @commands.command(aliases=["random"])
+    async def randomseed(self, ctx, *presets):
+        """
+        Crea una seed usando un preset aleatorio.
+
+        Usado sin parámetros, usará un preset aleatorio de entre todos los disponibles, sin usar modificadores.
+
+        Si se da una lista de presets como parámetro, se seleccionará uno de ellos. Para usar un preset con modificadores, rodearlo entre comillas (ejemplo: "open spoiler").
+        """
+        if not presets:
+            preset_list = []
+            for preset_file in Path("rando-settings").iterdir():
+                preset_list.append(preset_file.stem)
+            await Seedgen.seed(self, ctx, choice(preset_list))
+        else:
+            preset_list = list(presets)
+            while True:
+                preset_choice = choice(preset_list)
+                if is_preset(preset_choice.split()[0]):
+                    await Seedgen.seed(self, ctx, *preset_choice.split())
+                    break
+                else:
+                    preset_list.remove(preset_choice)
+
+    
+    @randomseed.error
+    async def randomseed_error(self, ctx, error):
+        error_mes = "Se ha producido un error."
+        if type(error) == commands.errors.CommandInvokeError:
+            if type(error.original) == IndexError:
+                error_mes = "Ninguno de los presets dados es válido."
+            else:
+                error_mes = error.original
         
         err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
         await ctx.send(error_mes, file=err_file)

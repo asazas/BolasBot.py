@@ -8,7 +8,7 @@ from discord.ext import commands
 from src.db_utils import (open_db, commit_db, close_db, insert_player_if_not_exists,
     insert_async, get_async_by_submit, get_active_async_races, update_async_status, save_async_result,
     get_results_for_race, get_player_by_id, get_async_history_channel, set_async_history_channel,
-    insert_private_race, get_active_private_races, get_private_race_by_channel, update_private_status) 
+    get_private_race_by_channel, update_private_status) 
 
 from src.seedgen import generate_from_preset, generate_from_hash, generate_from_attachment, is_preset
 
@@ -466,92 +466,3 @@ class AsyncRace(commands.Cog):
         
         err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
         await ctx.send(error_mes, file=err_file)
-
-
-    ########################################
-
-
-    @commands.command()
-    @commands.guild_only()
-    @commands.has_permissions(manage_channels=True)
-    async def match(self, ctx, name: str, *players):
-        """
-        Abre un canal de texto para una carrera privada.
-
-        Debe asignársele obligatoriamente un nombre.
-
-        Tras el nombre, debe mencionarse a los jugadores o roles que participarán en la carrera. Si no se menciona a ninguno, únicamente el creador de la carrera tendrá acceso al canal.
-
-        Este comando solo puede ser ejecutado por un moderador.
-        """
-        db_conn, db_cur = open_db(ctx.guild.id)
-        
-        creator = ctx.author
-        insert_player_if_not_exists(db_cur, creator.id, creator.name, creator.discriminator, creator.mention)
-
-        # Comprobación de límite: máximo de 10 carreras privadas en el servidor
-        races = get_active_private_races(db_cur)
-        if races and len(races) >= 10:
-            close_db(db_conn)
-            raise commands.errors.CommandInvokeError("Demasiadas carreras activas en el servidor. Contacta a un moderador para purgar alguna.")
-
-        # Comprobación de nombre válido
-        if re.match(r'<@[!&]?\d{18}>', name):
-            close_db(db_conn)
-            raise commands.errors.CommandInvokeError("Es necesario introducir un nombre para la carrera.")
-        
-        if len(name) > 20:
-            name = name[:20]
-        
-        # Obtener participantes de la carrera
-        participants = [ctx.author]
-        for p in players:
-            mention = re.match(r'<@!?(\d{18})>', p)
-            if mention:
-                discord_id = int(mention.group(1))
-                member = ctx.guild.get_member(discord_id)
-                if member:
-                    participants.append(member)
-                    insert_player_if_not_exists(db_cur, member.id, member.name, member.discriminator, member.mention)
-                continue
-            mention = re.match(r'<@&(\d{18})>', p)
-            if mention:
-                role_id = int(mention.group(1))
-                role = ctx.guild.get_role(role_id)
-                if role:
-                    participants.append(role)
-
-        # Crear canal para la carrera
-        channel_overwrites = {
-            ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-            ctx.guild.me: discord.PermissionOverwrite(read_messages=True)
-        }
-        for m in participants:
-            channel_overwrites[m] = discord.PermissionOverwrite(read_messages=True)
-
-        race_channel = await ctx.guild.create_text_channel(name, overwrites=channel_overwrites)
-               
-        insert_private_race(db_cur, name, creator.id, race_channel.id)
-
-        commit_db(db_conn)
-        close_db(db_conn)
-
-        text_ans = 'Abierta carrera privada con nombre: {}\nCanal: {}'.format(name, race_channel.mention)
-
-        await ctx.reply(text_ans, mention_author=False)
-
-
-    @match.error
-    async def match_error(self, ctx, error):
-        error_mes = "Se ha producido un error."
-        if type(error) == commands.errors.MissingRequiredArgument:
-            error_mes = "Faltan argumentos para ejecutar el comando."
-        elif type(error) == commands.errors.MissingPermissions:
-            error_mes = "No tienes permiso para ejecutar este comando."
-        elif type(error) == commands.errors.BadArgument:
-            error_mes = "Argumentos inválidos."
-        elif type(error) == commands.errors.CommandInvokeError:
-            error_mes = error.original
-        
-        err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
-        await ctx.reply(error_mes, mention_author=False, file=err_file)  
