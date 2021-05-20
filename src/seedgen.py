@@ -11,6 +11,28 @@ import discord
 from discord.ext import commands
 
 
+def get_seed_data(seed, preset=""):
+    if not hasattr(seed, "randomizer"):     # VARIA randomizer
+        if preset:
+            return "**Preset: **{}\n**URL: **{}".format(preset, seed.url)
+        return "**URL: **{}".format(seed.url)
+
+    if seed.randomizer in ["sm", "smz3"]:
+        code = " | ".join(seed.code.split())
+    else:
+        code = " | ".join(seed.code)
+
+    if preset:
+        return "**Preset: **{}\n**URL: **{}\n**Hash: **{}".format(preset, seed.url, code)
+    return "**URL: **{}\n**Hash: **{}".format(seed.url, code)
+
+
+def is_preset(preset):
+    if list(Path('rando-settings').glob('*/{}.yaml'.format(preset))):
+        return True
+    return False
+
+
 def add_default_customizer(settings_yaml):
     if "l" not in settings_yaml["settings"]:
         custom_settings = ""
@@ -20,8 +42,7 @@ def add_default_customizer(settings_yaml):
         settings_yaml["settings"] = {**settings_yaml["settings"], **custom_yaml}
 
 
-async def generate_from_yaml(yaml_contents, extra):
-    settings_yaml = yaml.load(yaml_contents, Loader=yaml.FullLoader)
+async def generate_alttpr(settings_yaml, extra):
     if "spoiler" in extra:
         settings_yaml["settings"]["spoilers"] = True
     if "noqs" in extra:
@@ -40,26 +61,56 @@ async def generate_from_yaml(yaml_contents, extra):
             if settings_yaml['settings']['custom']['item']['count']['PegasusBoots'] > 0:
                 settings_yaml['settings']['custom']['item']['count']['PegasusBoots'] -= 1
                 settings_yaml['settings']['custom']['item']['count']['TwentyRupees2'] += 1
-    seed = await pyz3r.alttpr(settings=settings_yaml['settings'], customizer=settings_yaml['customizer'])
-    return seed
+    return await pyz3r.alttpr(settings=settings_yaml['settings'], customizer=settings_yaml['customizer'])
+
+
+async def generate_sm(settings_yaml, extra):
+    if "spoiler" in extra:
+        settings_yaml["settings"]["race"] = "false"
+    if "split" in extra:
+        settings_yaml["settings"]["placement"] = "split"
+    return await pyz3r.sm(settings=settings_yaml['settings'], randomizer="sm", baseurl='https://sm.samus.link')
+
+
+async def generate_smz3(settings_yaml, extra):
+    if "spoiler" in extra:
+        settings_yaml["settings"]["race"] = "false"
+    if "hard" in extra:
+        settings_yaml["settings"]["smlogic"] = "hard"
+    return await pyz3r.sm(settings=settings_yaml['settings'], randomizer="smz3")
+
+
+async def generate_varia(settings_yaml, extra):
+    return await pyz3r.smvaria.SuperMetroidVaria.create(**settings_yaml["settings"], race=True)
+
+
+async def generate_from_yaml(yaml_contents, extra):
+    settings_yaml = yaml.load(yaml_contents, Loader=yaml.FullLoader)
+    if settings_yaml["randomizer"] == "alttp":
+        return await generate_alttpr(settings_yaml, extra)
+    elif settings_yaml["randomizer"] == "sm":
+        return await generate_sm(settings_yaml, extra)
+    elif settings_yaml["randomizer"] == "smz3":
+        return await generate_smz3(settings_yaml, extra)
+    elif settings_yaml["randomizer"] == "varia":
+        return await generate_varia(settings_yaml, extra)
+    return None
 
 
 async def generate_from_attachment(attachment):
-    seed = None
-
     file_contents = await attachment.read()
-    seed = await generate_from_yaml(file_contents)
-    
-    return seed
+    return await generate_from_yaml(file_contents)
 
 
 async def generate_from_preset(preset):
     preset_name = preset[0]
     extra = preset[1:]
+    seed = None
 
-    if Path('rando-settings/{}.yaml'.format(preset_name)).is_file():
+    if is_preset(preset_name):
         my_settings = ""
-        with open("rando-settings/{}.yaml".format(preset_name), "r", encoding="utf-8") as settings_file:
+        p_file = next(Path("rando-settings").rglob("{}.yaml".format(preset_name)))
+        with open(p_file, "r", encoding="utf-8") as settings_file:
             my_settings = settings_file.read()
         seed = await generate_from_yaml(my_settings, extra)
     
@@ -71,18 +122,6 @@ async def generate_from_hash(my_hash):
     return seed
 
 
-def get_seed_data(seed, preset=""):
-    if preset:
-        return "**Preset: **{}\n**URL: **{}\n**Hash: **{}".format(preset, seed.url, " | ".join(seed.code))
-    return "**URL: **{}\n**Hash: **{}".format(seed.url, " | ".join(seed.code))
-
-
-def is_preset(preset):
-    if Path('rando-settings/{}.yaml'.format(preset)).is_file():
-        return True
-    return False
-
-
 class Seedgen(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -91,19 +130,27 @@ class Seedgen(commands.Cog):
     @commands.command()
     async def seed(self, ctx, *preset):
         """
-        Crea una seed de ALTTPR.
+        Crea una seed.
 
         Requiere indicar un preset o adjuntar un YAML de ajustes. Si usas un preset, puedes añadir opciones extra.
 
-        Opciones extra disponibles: 
+        Opciones extra disponibles para ALTTPR: 
          - spoiler: Hace que el spoiler log de la seed esté disponible.
          - noqs: Deshabilita quickswap.
          - pistas: Las casillas telepáticas pueden dar pistas sobre localizaciones de ítems.
          - ad: All Dungeons, Ganon solo será vulnerable al completar todas las mazmorras del juego, incluyendo Torre de Agahnim.
          - hard: Cambia el item pool a hard, reduciendo el número máximo de corazones, espadas e ítems de seguridad.
          - botas: Las Botas de Pegaso estarán equipadas al inicio de la partida.
+        
+        Opciones extra disponibles para SM:
+         - spoiler: Hace que el spoiler log de la seed esté disponible.
+         - split: Cambia el algoritmo de randomización a Major/Minor Split.
+        
+        Opciones extra disponibles para SMZ3:
+         - spoiler: Hace que el spoiler log de la seed esté disponible.
+         - hard: Establece la lógica de Super Metroid a Hard.
 
-        Si introduces la URL de una seed ya creada, se devolverá su hash.
+        Si introduces la URL de una seed de ALTTPR ya creada, se devolverá su hash.
         """
         seed = None
         preset_used = False
@@ -150,17 +197,19 @@ class Seedgen(commands.Cog):
         """
         msg = ""
         if not preset or not is_preset(preset):
-            preset_files = sorted(Path("rando-settings").glob("*.yaml"))
-            msg += "**Presets disponibles: **`"
-            for i in range(len(preset_files)):
-                msg += preset_files[i].stem
-                if i != len(preset_files) - 1:
-                    msg += ", "
-            msg += "`"
+            msg += "**Presets disponibles: **\n```"
+            for folder in Path("rando-settings").iterdir():
+                msg += "{}:\n".format(folder.stem)
+                preset_files = sorted(folder.glob("*.yaml"))
+                for f in preset_files:
+                    msg += " - {}\n".format(f.stem)
+                msg += "\n"
+            msg += "```"
         
         else:
             my_settings = ""
-            with open("rando-settings/{}.yaml".format(preset), "r", encoding="utf-8") as settings_file:
+            p_file = next(Path("rando-settings").rglob("{}.yaml".format(preset)))
+            with open(p_file, "r", encoding="utf-8") as settings_file:
                 my_settings = settings_file.read()
                 settings_yaml = yaml.load(my_settings, Loader=yaml.FullLoader)
                 msg += "**{}**: {}".format(settings_yaml["goal_name"], settings_yaml["description"])
@@ -181,7 +230,7 @@ class Seedgen(commands.Cog):
     @commands.command(aliases=["random"])
     async def randomseed(self, ctx, *presets):
         """
-        Crea una seed usando un preset aleatorio.
+        Crea una seed de ALTTPR usando un preset aleatorio.
 
         Usado sin parámetros, usará un preset aleatorio de entre todos los disponibles, sin usar modificadores.
 
@@ -189,7 +238,7 @@ class Seedgen(commands.Cog):
         """
         if not presets:
             preset_list = []
-            for preset_file in Path("rando-settings").iterdir():
+            for preset_file in Path("rando-settings/alttp").iterdir():
                 preset_list.append(preset_file.stem)
             await Seedgen.seed(self, ctx, choice(preset_list))
         else:

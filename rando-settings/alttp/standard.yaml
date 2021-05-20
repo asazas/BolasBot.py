@@ -1,17 +1,18 @@
 ---
-goal_name: mc
+randomizer: alttp
+goal_name: standard
 customizer: false
-description: "Map and Compass Shuffle: Seed de modo Open en la que los mapas y brújulas de las mazmorras están incluidos en el pool general de ítems. El premio (cristal o colgante) de una mazmorra solo se revela en el mapa general del mundo al conseguir el mapa de esa mazmorra."
+description: "La partida comienza con la secuencia de escape del castillo de Hyrule, igual que en vanilla. El tío de Link proporciona un arma de entre las siguientes para completar esta sección: espada de nivel 1, arco, 10 bombas, vara de fuego, martillo, bastón de Somaria o bastón de Byrna."
 settings:
-  name: mc
-  notes: "Map and Compass Shuffle"
+  name: standard
+  notes: "Standard"
   allow_quickswap: true
   goal: ganon
   item:
     pool: normal
     functionality: normal
   lang: es
-  mode: open
+  mode: standard
   hints: "off"
   weapons: randomized
   crystals:
@@ -27,5 +28,5 @@ settings:
   entrances: none
   tournament: true
   accessibility: items
-  dungeon_items: mc
+  dungeon_items: standard
   item_placement: advanced

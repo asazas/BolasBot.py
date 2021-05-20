@@ -1,10 +1,11 @@
 ---
-goal_name: standard
+randomizer: alttp
+goal_name: casual
 customizer: false
-description: "La partida comienza con la secuencia de escape del castillo de Hyrule, igual que en vanilla. El tío de Link proporciona un arma de entre las siguientes para completar esta sección: espada de nivel 1, arco, 10 bombas, vara de fuego, martillo, bastón de Somaria o bastón de Byrna."
+description: "Igual que Standard, pero teniendo la espada de nivel 1 desde el inicio. El tío no necesariamente otorga un arma para el escape."
 settings:
-  name: standard
-  notes: "Standard"
+  name: casual
+  notes: "Casual"
   allow_quickswap: true
   goal: ganon
   item:
@@ -13,7 +14,7 @@ settings:
   lang: es
   mode: standard
   hints: "off"
-  weapons: randomized
+  weapons: assured
   crystals:
     ganon: "7"
     tower: "7"

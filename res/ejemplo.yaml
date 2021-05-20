@@ -2,6 +2,7 @@
 
 ## ARCHIVO DE CONFIGURACIÓN YAML DE EJEMPLO
 
+randomizer: alttp   # Ajustes de ALTTP Randomizer
 goal_name: open   # Nombre del preset
 customizer: false   # Si los ajustes requieren opciones de customizer, cambiar a "true"
 description: "Estándar con espada y botas iniciales"  # Descripción del preset

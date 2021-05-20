@@ -1,10 +1,11 @@
 ---
-goal_name: bingo
+randomizer: alttp
+goal_name: open
 customizer: false
-description: "Igual que Open, pero es garantizado que todas las localizaciones del juego serán accesibles. Ideal para partidas de bingo."
+description: "La secuencia inicial de escape está completada por defecto, por lo que se puede comenzar la partida desde casa de Link o desde el santuario. Link empieza sin armas ni otros ítems."
 settings:
-  name: bingo
-  notes: "Bingo"
+  name: open
+  notes: "Open"
   allow_quickswap: true
   goal: ganon
   item:
@@ -26,6 +27,6 @@ settings:
   spoilers: false
   entrances: none
   tournament: true
-  accessibility: locations
+  accessibility: items
   dungeon_items: standard
   item_placement: advanced

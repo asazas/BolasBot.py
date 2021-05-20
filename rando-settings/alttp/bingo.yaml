@@ -1,19 +1,20 @@
 ---
-goal_name: casual
+randomizer: alttp
+goal_name: bingo
 customizer: false
-description: "Igual que Standard, pero teniendo la espada de nivel 1 desde el inicio. El tío no necesariamente otorga un arma para el escape."
+description: "Igual que Open, pero es garantizado que todas las localizaciones del juego serán accesibles. Ideal para partidas de bingo."
 settings:
-  name: casual
-  notes: "Casual"
+  name: bingo
+  notes: "Bingo"
   allow_quickswap: true
   goal: ganon
   item:
     pool: normal
     functionality: normal
   lang: es
-  mode: standard
+  mode: open
   hints: "off"
-  weapons: assured
+  weapons: randomized
   crystals:
     ganon: "7"
     tower: "7"
@@ -26,6 +27,6 @@ settings:
   spoilers: false
   entrances: none
   tournament: true
-  accessibility: items
+  accessibility: locations
   dungeon_items: standard
   item_placement: advanced

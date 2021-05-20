@@ -126,9 +126,17 @@ class AsyncRace(commands.Cog):
                     seed = await generate_from_preset(preset)
 
         if seed:
-            seed_hash = seed.hash
             seed_url = seed.url
-            seed_code = " | ".join(seed.code)
+            seed_code = None
+            seed_hash = None
+            if not hasattr(seed, "randomizer"):     # VARIA
+                seed_hash = seed.data["seedKey"]
+            elif seed.randomizer in ["sm", "smz3"]:
+                seed_code = " | ".join(seed.code.split())
+                seed_hash = seed.slug_id
+            else:
+                seed_code = " | ".join(seed.code)
+                seed_hash = seed.hash
 
         # Crear canales y rol para la async
 
@@ -424,7 +432,7 @@ class AsyncRace(commands.Cog):
             if time.lower() == "ff":
                 time = "99:59:59"
                 collection = 0
-            if re.match(r'\d?\d:[0-5]\d:[0-5]\d$', time) and collection >= 0 and collection <= 216:
+            if re.match(r'\d?\d:[0-5]\d:[0-5]\d$', time) and collection >= 0:
                 time_arr = [int(x) for x in time.split(':')]
                 time_s = 3600*time_arr[0] + 60*time_arr[1] + time_arr[2]
                 save_async_result(db_cur, race[0], author.id, time_s, collection)
