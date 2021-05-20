@@ -198,7 +198,7 @@ class Seedgen(commands.Cog):
         msg = ""
         if not preset or not is_preset(preset):
             msg += "**Presets disponibles: **\n```"
-            for folder in Path("rando-settings").iterdir():
+            for folder in sorted(Path("rando-settings").iterdir()):
                 msg += "{}:\n".format(folder.stem)
                 preset_files = sorted(folder.glob("*.yaml"))
                 for f in preset_files:
