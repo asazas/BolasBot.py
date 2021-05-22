@@ -2,9 +2,9 @@ from pathlib import Path
 import re
 from random import randint, choice
 
-import yaml     # pip install pyyaml
+import yaml
 
-import pyz3r    # pip install pyz3r
+import pyz3r
 
 import discord
 

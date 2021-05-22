@@ -11,7 +11,7 @@ from src.memes import Memes
 from src.tourney import Tourney
 
 import discord
-from discord.ext import commands  # pip install discord.py
+from discord.ext import commands
 
 class BolasBot(commands.Bot):
     async def on_ready(self):
