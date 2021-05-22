@@ -13,6 +13,23 @@ import discord
 from discord.ext import commands
 
 
+DUNGEON_CODES = {
+    "H2": "H2-HyruleCastle",
+    "A1": "A1-CastleTower",
+    "P1": "P1-EasternPalace",
+    "P2": "P2-DesertPalace",
+    "P3": "P3-TowerOfHera",
+    "D1": "D1-PalaceOfDarkness",
+    "D2": "D2-SwampPalace",
+    "D3": "D3-SkullWoods",
+    "D4": "D4-ThievesTown",
+    "D5": "D5-IcePalace",
+    "D6": "D6-MiseryMire",
+    "D7": "D7-TurtleRock",
+    "A2": "A2-GanonsTower"
+}
+
+
 def get_seed_data(seed, preset=""):
     if not hasattr(seed, "randomizer"):     # VARIA randomizer
         if preset:
@@ -124,6 +141,19 @@ async def generate_from_hash(my_hash):
     return seed
 
 
+def get_spoiler(seed):
+    spoiler_file = None
+    if hasattr(seed, "get_formatted_spoiler"):
+        spoiler_text = seed.get_formatted_spoiler()
+        if spoiler_text:
+            spoiler_dumps = dumps(spoiler_text, indent=4)
+            for k, v in DUNGEON_CODES.items():
+                spoiler_dumps = spoiler_dumps.replace(k, v)
+            spoiler_io = StringIO(spoiler_dumps)
+            spoiler_file = discord.File(spoiler_io, filename="spoiler.json", spoiler=True)
+    return spoiler_file
+
+
 class Seedgen(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -172,13 +202,7 @@ class Seedgen(commands.Cog):
                     preset_used = True
             
         if seed:
-            spoiler_file = None
-            if hasattr(seed, "get_formatted_spoiler"):
-                spoiler_text = seed.get_formatted_spoiler()
-                if spoiler_text:
-                    spoiler_io = StringIO(dumps(spoiler_text, indent=4))
-                    spoiler_file = discord.File(spoiler_io, filename="spoiler.json", spoiler=True)
-
+            spoiler_file = get_spoiler(seed)
             if preset_used:
                 await ctx.reply(get_seed_data(seed, " ".join(preset)), mention_author=False, file=spoiler_file)
             else:

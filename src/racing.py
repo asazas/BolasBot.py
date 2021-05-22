@@ -12,7 +12,7 @@ from src.db_utils import (open_db, commit_db, close_db, insert_player_if_not_exi
     get_results_for_race, get_player_by_id, get_async_history_channel, set_async_history_channel,
     get_private_race_by_channel, update_private_status) 
 
-from src.seedgen import generate_from_preset, generate_from_hash, generate_from_attachment, is_preset
+from src.seedgen import generate_from_preset, generate_from_hash, generate_from_attachment, is_preset, get_spoiler
 
 
 def get_results_text(db_cur, submit_channel):
@@ -138,11 +138,7 @@ class AsyncRace(commands.Cog):
             else:
                 seed_code = " | ".join(seed.code)
                 seed_hash = seed.hash
-            if hasattr(seed, "get_formatted_spoiler"):
-                spoiler_text = seed.get_formatted_spoiler()
-                if spoiler_text:
-                    spoiler_io = StringIO(dumps(spoiler_text, indent=4))
-                    spoiler_file = discord.File(spoiler_io, filename="{}.json".format(name), spoiler=True)
+            spoiler_file = get_spoiler(seed)
 
         # Crear canales y rol para la async
 
