@@ -1,5 +1,7 @@
 import re
 from random import randint
+from io import StringIO
+from json import dumps
 
 import discord
 
@@ -107,6 +109,7 @@ class AsyncRace(commands.Cog):
         seed_code = None
         seed_url = None
         desc = " ".join(preset)
+        spoiler_file = None
 
         async with ctx.typing():
             if ctx.message.attachments:
@@ -127,8 +130,6 @@ class AsyncRace(commands.Cog):
 
         if seed:
             seed_url = seed.url
-            seed_code = None
-            seed_hash = None
             if not hasattr(seed, "randomizer"):     # VARIA
                 seed_hash = seed.data["seedKey"]
             elif seed.randomizer in ["sm", "smz3"]:
@@ -137,6 +138,11 @@ class AsyncRace(commands.Cog):
             else:
                 seed_code = " | ".join(seed.code)
                 seed_hash = seed.hash
+            if hasattr(seed, "get_formatted_spoiler"):
+                spoiler_text = seed.get_formatted_spoiler()
+                if spoiler_text:
+                    spoiler_io = StringIO(dumps(spoiler_text, indent=4))
+                    spoiler_file = discord.File(spoiler_io, filename="{}.json".format(name), spoiler=True)
 
         # Crear canales y rol para la async
 
@@ -169,7 +175,7 @@ class AsyncRace(commands.Cog):
         async_data = get_async_data(db_cur, submit_channel.id)
         close_db(db_conn)
 
-        data_msg = await submit_channel.send(async_data)
+        data_msg = await submit_channel.send(async_data, file=spoiler_file)
         await data_msg.pin()
         await submit_channel.send("Enviad resultados usando el comando: `!done hh:mm:ss CR`\n"
                                   "Por ejemplo: `!done 1:40:35 144`, `!done ff` (este último registra un forfeit)\n"

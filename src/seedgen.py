@@ -1,6 +1,8 @@
 from pathlib import Path
 import re
 from random import randint, choice
+from io import StringIO
+from json import dumps
 
 import yaml
 
@@ -44,7 +46,7 @@ def add_default_customizer(settings_yaml):
 
 async def generate_alttpr(settings_yaml, extra):
     if "spoiler" in extra:
-        settings_yaml["settings"]["spoilers"] = True
+        settings_yaml["settings"]["spoilers"] = "on"
     if "noqs" in extra:
         settings_yaml["settings"]["allow_quickswap"] = False
     if "pistas" in extra:
@@ -150,7 +152,7 @@ class Seedgen(commands.Cog):
          - spoiler: Hace que el spoiler log de la seed esté disponible.
          - hard: Establece la lógica de Super Metroid a Hard.
 
-        Si introduces la URL de una seed de ALTTPR ya creada, se devolverá su hash.
+        Si introduces la URL de una seed de ALTTPR ya creada, se devolverá su hash y, si está disponible, su spoiler log.
         """
         seed = None
         preset_used = False
@@ -170,13 +172,20 @@ class Seedgen(commands.Cog):
                     preset_used = True
             
         if seed:
+            spoiler_file = None
+            if hasattr(seed, "get_formatted_spoiler"):
+                spoiler_text = seed.get_formatted_spoiler()
+                if spoiler_text:
+                    spoiler_io = StringIO(dumps(spoiler_text, indent=4))
+                    spoiler_file = discord.File(spoiler_io, filename="spoiler.json", spoiler=True)
+
             if preset_used:
-                await ctx.reply(get_seed_data(seed, " ".join(preset)), mention_author=False)
+                await ctx.reply(get_seed_data(seed, " ".join(preset)), mention_author=False, file=spoiler_file)
             else:
-                await ctx.reply(get_seed_data(seed), mention_author=False)
+                await ctx.reply(get_seed_data(seed), mention_author=False, file=spoiler_file)
         else:
             raise commands.errors.CommandInvokeError("Error al generar la seed. Asegúrate de que el preset o YAML introducido sea válido.")
-
+    
     
     @seed.error
     async def seed_error(self, ctx, error):
