@@ -404,9 +404,9 @@ class AsyncRace(commands.Cog):
     ########################################
 
 
-    @commands.command()
+    @commands.command(aliases=["forfeit", "ff"])
     @commands.guild_only()
-    async def done(self, ctx, time: str, collection: int=0):
+    async def done(self, ctx, time: str="", collection: int=0):
         """
         Envía un resultado de la carrera asíncrona.
 
@@ -431,7 +431,7 @@ class AsyncRace(commands.Cog):
             return
 
         if race[5] == 0:
-            if time.lower() == "ff":
+            if ctx.invoked_with == "forfeit" or ctx.invoked_with == "ff" or time.lower() == "ff":
                 time = "99:59:59"
                 collection = 0
             if re.match(r'\d?\d:[0-5]\d:[0-5]\d$', time) and collection >= 0:
