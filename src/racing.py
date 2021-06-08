@@ -1,7 +1,6 @@
 import re
 from random import randint
-from io import StringIO
-from json import dumps
+import asyncio
 
 import discord
 
@@ -70,6 +69,7 @@ def check_race_permissions(ctx, member_id, submit_id):
 class AsyncRace(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.lock = asyncio.Lock()
 
     
     @commands.command(aliases=["async"])
@@ -418,11 +418,8 @@ class AsyncRace(commands.Cog):
         """
         message = ctx.message
         await message.delete()
-
+       
         db_conn, db_cur = open_db(ctx.guild.id)
-
-        author = ctx.author
-        insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
 
         race = get_async_by_submit(db_cur, ctx.channel.id)
 
@@ -437,16 +434,21 @@ class AsyncRace(commands.Cog):
             if re.match(r'\d?\d:[0-5]\d:[0-5]\d$', time) and collection >= 0:
                 time_arr = [int(x) for x in time.split(':')]
                 time_s = 3600*time_arr[0] + 60*time_arr[1] + time_arr[2]
-                save_async_result(db_cur, race[0], author.id, time_s, collection)
+                
+                author = ctx.author
+                async with self.lock:
+                    insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
+                    save_async_result(db_cur, race[0], author.id, time_s, collection)
+                    commit_db(db_conn)
 
                 results_text = get_results_text(db_cur, race[11])
                 results_channel = ctx.guild.get_channel(race[12])
                 results_msg = await results_channel.fetch_message(race[13])
                 await results_msg.edit(content=results_text)
 
-                await ctx.send("GG {}, tu resultado se ha registrado.".format(author.mention))
                 async_role = ctx.guild.get_role(race[10])
                 await author.add_roles(async_role)
+                await ctx.send("GG {}, tu resultado se ha registrado.".format(author.mention))
         
             else:
                 close_db(db_conn)
@@ -456,7 +458,6 @@ class AsyncRace(commands.Cog):
             close_db(db_conn)
             raise commands.errors.CommandInvokeError("Esta carrera asíncrona no está abierta.")
         
-        commit_db(db_conn)
         close_db(db_conn)
 
 
