@@ -1,6 +1,9 @@
 from pathlib import Path
+import asyncio
 
 import sqlite3
+
+write_lock = asyncio.Lock()
 
 def init_db(db_name, server):
     mydb = sqlite3.connect(db_name)

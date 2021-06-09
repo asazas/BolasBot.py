@@ -2,7 +2,7 @@ import re
 from random import choice, randint
 
 from src.seedgen import Seedgen
-from src.db_utils import (open_db, commit_db, close_db, insert_player_if_not_exists,
+from src.db_utils import (write_lock, open_db, commit_db, close_db, insert_player_if_not_exists,
     insert_private_race, get_active_private_races) 
 
 import discord
@@ -64,7 +64,6 @@ class Tourney(commands.Cog):
         db_conn, db_cur = open_db(ctx.guild.id)
         
         creator = ctx.author
-        insert_player_if_not_exists(db_cur, creator.id, creator.name, creator.discriminator, creator.mention)
 
         # Comprobación de límite: máximo de 10 carreras privadas en el servidor
         races = get_active_private_races(db_cur)
@@ -82,6 +81,7 @@ class Tourney(commands.Cog):
         
         # Obtener participantes de la carrera
         participants = [ctx.author]
+        roles = []
         for p in players:
             mention = re.match(r'<@!?(\d{18})>', p)
             if mention:
@@ -89,14 +89,13 @@ class Tourney(commands.Cog):
                 member = ctx.guild.get_member(discord_id)
                 if member:
                     participants.append(member)
-                    insert_player_if_not_exists(db_cur, member.id, member.name, member.discriminator, member.mention)
                 continue
             mention = re.match(r'<@&(\d{18})>', p)
             if mention:
                 role_id = int(mention.group(1))
                 role = ctx.guild.get_role(role_id)
                 if role:
-                    participants.append(role)
+                    roles.append(role)
 
         # Crear canal para la carrera
         channel_overwrites = {
@@ -105,12 +104,17 @@ class Tourney(commands.Cog):
         }
         for m in participants:
             channel_overwrites[m] = discord.PermissionOverwrite(read_messages=True)
+        for r in roles:
+            channel_overwrites[r] = discord.PermissionOverwrite(read_messages=True)
 
         race_channel = await ctx.guild.create_text_channel(name, overwrites=channel_overwrites)
-               
-        insert_private_race(db_cur, name, creator.id, race_channel.id)
 
-        commit_db(db_conn)
+        async with write_lock:    
+            for p in participants:
+                insert_player_if_not_exists(db_cur, p.id, p.name, p.discriminator, p.mention)
+            insert_private_race(db_cur, name, creator.id, race_channel.id)
+            commit_db(db_conn)
+
         close_db(db_conn)
 
         text_ans = 'Abierta carrera privada con nombre: {}\nCanal: {}'.format(name, race_channel.mention)

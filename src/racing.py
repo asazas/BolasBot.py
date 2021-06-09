@@ -6,7 +6,7 @@ import discord
 
 from discord.ext import commands
 
-from src.db_utils import (open_db, commit_db, close_db, insert_player_if_not_exists,
+from src.db_utils import (write_lock, open_db, commit_db, close_db, insert_player_if_not_exists,
     insert_async, get_async_by_submit, get_active_async_races, update_async_status, save_async_result,
     get_results_for_race, get_player_by_id, get_async_history_channel, set_async_history_channel,
     get_private_race_by_channel, update_private_status) 
@@ -69,7 +69,6 @@ def check_race_permissions(ctx, member_id, submit_id):
 class AsyncRace(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.lock = asyncio.Lock()
 
     
     @commands.command(aliases=["async"])
@@ -85,9 +84,6 @@ class AsyncRace(commands.Cog):
         Este comando crea aleatoriamente los canales de Discord necesarios para alojar la carrera asíncrona.
         """
         db_conn, db_cur = open_db(ctx.guild.id)
-        
-        creator = ctx.author
-        insert_player_if_not_exists(db_cur, creator.id, creator.name, creator.discriminator, creator.mention)
 
         # Comprobación de límite: máximo de 10 asíncronas en el servidor
         asyncs = get_active_async_races(db_cur)
@@ -164,10 +160,13 @@ class AsyncRace(commands.Cog):
         results_text = get_results_text(db_cur, submit_channel.id)
         results_msg = await results_channel.send(results_text)
                
-        insert_async(db_cur, name, creator.id, desc, seed_hash, seed_code, seed_url, async_role.id,
+        creator = ctx.author
+        async with write_lock:
+            insert_player_if_not_exists(db_cur, creator.id, creator.name, creator.discriminator, creator.mention)
+            insert_async(db_cur, name, creator.id, desc, seed_hash, seed_code, seed_url, async_role.id,
                      submit_channel.id, results_channel.id, results_msg.id, spoilers_channel.id)
+            commit_db(db_conn)
 
-        commit_db(db_conn)
         async_data = get_async_data(db_cur, submit_channel.id)
         close_db(db_conn)
 
@@ -212,9 +211,6 @@ class AsyncRace(commands.Cog):
         """
         db_conn, db_cur = open_db(ctx.guild.id)
 
-        author = ctx.author
-        insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
-
         race = get_async_by_submit(db_cur, ctx.channel.id)
 
         if not race:
@@ -226,8 +222,12 @@ class AsyncRace(commands.Cog):
             raise commands.errors.CommandInvokeError("Esta operación solo puede realizarla el creador original de la carrera o un moderador.")
 
         if race[5] == 0:
-            update_async_status(db_cur, race[0], 1)
-            commit_db(db_conn)
+            author = ctx.author
+            async with write_lock:
+                insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
+                update_async_status(db_cur, race[0], 1)
+                commit_db(db_conn)
+
             close_db(db_conn)
             await ctx.reply("Esta carrera ha sido cerrada.", mention_author=False)
         else:
@@ -264,9 +264,6 @@ class AsyncRace(commands.Cog):
         """
         db_conn, db_cur = open_db(ctx.guild.id)
 
-        author = ctx.author
-        insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
-
         race = get_async_by_submit(db_cur, ctx.channel.id)
 
         if not race:
@@ -278,8 +275,12 @@ class AsyncRace(commands.Cog):
             raise commands.errors.CommandInvokeError("Esta operación solo puede realizarla el creador original de la carrera o un moderador.")
 
         if race[5] == 1:
-            update_async_status(db_cur, race[0], 0)
-            commit_db(db_conn)
+            author = ctx.author
+            async with write_lock:
+                insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
+                update_async_status(db_cur, race[0], 0)
+                commit_db(db_conn)
+
             close_db(db_conn)
             await ctx.reply("Esta carrera ha sido reabierta.", mention_author=False)
         else:
@@ -318,19 +319,20 @@ class AsyncRace(commands.Cog):
         """
         db_conn, db_cur = open_db(ctx.guild.id)
 
-        author = ctx.author
-        insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
-
         race = get_async_by_submit(db_cur, ctx.channel.id)
 
         if not race:
             race = get_private_race_by_channel(db_cur, ctx.channel.id)
             if race:
                 if check_race_permissions(ctx, race[2], race[5]):
-                    update_private_status(db_cur, race[0], 2)
+                    author = ctx.author
+                    async with write_lock:
+                        insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
+                        update_private_status(db_cur, race[0], 2)
+                        commit_db(db_conn)
+
                     race_channel = ctx.guild.get_channel(race[5])
                     await race_channel.delete()
-                    commit_db(db_conn)
                 else:
                     close_db(db_conn)
                     raise commands.errors.CommandInvokeError("Esta operación solo puede realizarla el creador original de la carrera o un moderador.")
@@ -342,7 +344,11 @@ class AsyncRace(commands.Cog):
             raise commands.errors.CommandInvokeError("Esta operación solo puede realizarla el creador original de la carrera o un moderador.")
 
         if race[5] == 1:
-            update_async_status(db_cur, race[0], 2)
+            author = ctx.author
+            async with write_lock:
+                insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
+                update_async_status(db_cur, race[0], 2)
+                commit_db(db_conn)
 
             # Copia de resultados al historial, si los hay
             submit_channel = ctx.guild.get_channel(race[11])
@@ -356,7 +362,9 @@ class AsyncRace(commands.Cog):
                         ctx.guild.me: discord.PermissionOverwrite(send_messages=True)
                     }
                     my_hist_channel = await ctx.guild.create_text_channel("async-historico", overwrites=history_overwrites)
-                    set_async_history_channel(db_cur, my_hist_channel.id)
+                    async with write_lock:
+                        set_async_history_channel(db_cur, my_hist_channel.id)
+                        commit_db(db_conn)
                 else:
                     my_hist_channel = ctx.guild.get_channel(history_channel[0])
 
@@ -379,7 +387,6 @@ class AsyncRace(commands.Cog):
 
             await category.delete()
 
-            commit_db(db_conn)
             close_db(db_conn)
         
         else:
@@ -436,7 +443,7 @@ class AsyncRace(commands.Cog):
                 time_s = 3600*time_arr[0] + 60*time_arr[1] + time_arr[2]
                 
                 author = ctx.author
-                async with self.lock:
+                async with write_lock:
                     insert_player_if_not_exists(db_cur, author.id, author.name, author.discriminator, author.mention)
                     save_async_result(db_cur, race[0], author.id, time_s, collection)
                     commit_db(db_conn)
