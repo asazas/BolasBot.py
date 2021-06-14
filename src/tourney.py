@@ -51,11 +51,11 @@ class Tourney(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.has_permissions(manage_channels=True)
-    async def match(self, ctx, name: str, *players):
+    async def match(self, ctx, *params):
         """
         Abre un canal de texto para una carrera privada.
 
-        Debe asignársele obligatoriamente un nombre.
+        Opcionalmente, puede asignársele un nombre. Si no se indica, se pondrá un nombre por defecto.
 
         Tras el nombre, debe mencionarse a los jugadores o roles que participarán en la carrera. Si no se menciona a ninguno, únicamente el creador de la carrera tendrá acceso al canal.
 
@@ -65,16 +65,22 @@ class Tourney(commands.Cog):
         
         creator = ctx.author
 
+        if not params:
+            close_db(db_conn)
+            raise commands.errors.CommandInvokeError("Faltan argumentos para ejecutar el comando.")
+
         # Comprobación de límite: máximo de 10 carreras privadas en el servidor
         races = get_active_private_races(db_cur)
         if races and len(races) >= 10:
             close_db(db_conn)
             raise commands.errors.CommandInvokeError("Demasiadas carreras activas en el servidor. Contacta a un moderador para purgar alguna.")
 
-        # Comprobación de nombre válido
+        # Comprobación de nombre
+        name = params[0]
+        players = params[1:]
         if re.match(r'<@[!&]?\d{18}>', name):
-            close_db(db_conn)
-            raise commands.errors.CommandInvokeError("Es necesario introducir un nombre para la carrera.")
+            name = "carrera-privada"
+            players = params
         
         if len(name) > 20:
             name = name[:20]
