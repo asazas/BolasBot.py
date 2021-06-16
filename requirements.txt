@@ -9,7 +9,7 @@ idna==2.10
 multidict==5.1.0
 python-bps-continued==7
 PyYAML==5.4.1
-pyz3r==5.5.0
+pyz3r==5.5.2
 requests==2.25.1
 six==1.16.0
 slugid==2.0.0
