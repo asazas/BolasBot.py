@@ -78,7 +78,7 @@ class Tourney(commands.Cog):
         # Comprobación de nombre
         name = params[0]
         players = params[1:]
-        if re.match(r'<@[!&]?\d{18}>', name):
+        if re.match(r'<@[!&]?\d+>', name):
             name = "carrera-privada"
             players = params
         
@@ -89,14 +89,14 @@ class Tourney(commands.Cog):
         participants = [ctx.author]
         roles = []
         for p in players:
-            mention = re.match(r'<@!?(\d{18})>', p)
+            mention = re.match(r'<@!?(\d+)>', p)
             if mention:
                 discord_id = int(mention.group(1))
                 member = ctx.guild.get_member(discord_id)
                 if member:
                     participants.append(member)
                 continue
-            mention = re.match(r'<@&(\d{18})>', p)
+            mention = re.match(r'<@&(\d+)>', p)
             if mention:
                 role_id = int(mention.group(1))
                 role = ctx.guild.get_role(role_id)
