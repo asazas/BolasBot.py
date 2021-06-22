@@ -83,6 +83,15 @@ async def generate_alttpr(settings_yaml, extra):
     return await pyz3r.alttpr(settings=settings_yaml['settings'], customizer=settings_yaml['customizer'])
 
 
+async def generate_mystery(settings_yaml, extra):
+    rando_settings = pyz3r.mystery.generate_random_settings(settings_yaml)[0]
+    rando_settings["allow_quickswap"] = True
+    settings_generate_alttpr = {"randomizer": "alttp", "customizer": False, "description": settings_yaml["description"], "settings": rando_settings}
+    if "l" in rando_settings:
+        settings_generate_alttpr["customizer"] = True
+    return await generate_alttpr(settings_generate_alttpr, extra)
+
+
 async def generate_sm(settings_yaml, extra):
     if "spoiler" in extra:
         settings_yaml["settings"]["race"] = "false"
@@ -107,6 +116,8 @@ async def generate_from_yaml(yaml_contents, extra):
     settings_yaml = yaml.load(yaml_contents, Loader=yaml.FullLoader)
     if settings_yaml["randomizer"] == "alttp":
         return await generate_alttpr(settings_yaml, extra)
+    elif settings_yaml["randomizer"] == "mystery":
+        return await generate_mystery(settings_yaml, extra)
     elif settings_yaml["randomizer"] == "sm":
         return await generate_sm(settings_yaml, extra)
     elif settings_yaml["randomizer"] == "smz3":
@@ -168,7 +179,7 @@ class Seedgen(commands.Cog):
 
         Opciones extra disponibles para ALTTPR: 
          - spoiler: Hace que el spoiler log de la seed esté disponible.
-         - noqs: Deshabilita quickswap.
+         - noqs: Impide que se pueda activar quickswap. Esta opción no está disponible en modos mystery.
          - pistas: Las casillas telepáticas pueden dar pistas sobre localizaciones de ítems.
          - ad: All Dungeons, Ganon solo será vulnerable al completar todas las mazmorras del juego, incluyendo Torre de Agahnim.
          - hard: Cambia el item pool a hard, reduciendo el número máximo de corazones, espadas e ítems de seguridad.
@@ -299,11 +310,27 @@ class Seedgen(commands.Cog):
     
 
     @commands.command()
-    async def yaml(self, ctx):
+    async def yaml(self, ctx, archivo: str="ajustes"):
         """
-        YAML de configuración de ALTTPR de ejemplo.
+        Obtener un YAML de configuración de ejemplo. Puede usarse de base para crear configuraciones personalizadas.
 
-        Puede usarse de base para crear YAML personalizados.
+        Ejemplos disponibles:
+         - ajustes: YAML para seeds de ALTTPR.
+         - mystery: YAML para crear seeds mystery de ALTTPR.
+         - multi: YAML de ajustes para utilizar en Berserker Multiworld.
         """
-        my_yaml = discord.File("res/ejemplo.yaml")
-        await ctx.send("Ejemplo de YAML de configuración de ALTTPR.", file=my_yaml)
+        if list(Path('res/yaml').glob('{}.yaml'.format(archivo))):
+            my_yaml = discord.File("res/yaml/{}.yaml".format(archivo))
+            await ctx.reply(file=my_yaml)
+        else:
+            raise commands.errors.CommandInvokeError("No hay un YAML de ejemplo con el nombre dado.")
+
+
+    @yaml.error
+    async def yaml_error(self, ctx, error):
+        error_mes = "Se ha producido un error."
+        if type(error) == commands.errors.CommandInvokeError:
+            error_mes = error.original
+        
+        err_file = discord.File("res/almeida{}.png".format(randint(0, 3)))
+        await ctx.send(error_mes, file=err_file)
