@@ -1,6 +1,5 @@
 import re
 from random import randint
-import asyncio
 
 import discord
 
