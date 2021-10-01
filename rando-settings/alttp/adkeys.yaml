@@ -1,0 +1,32 @@
+---
+randomizer: alttp
+goal_name: all dungeons keysanity
+customizer: false
+description: "Igual que Keysanity, pero es necesario completar todas las mazmorras, incluyendo Torre de Agahnim, para que Ganon sea vulnerable."
+settings:
+  name: adkeys
+  notes: "All Dungeons Keysanity"
+  allow_quickswap: true
+  goal: dungeons
+  item:
+    pool: normal
+    functionality: normal
+  lang: es
+  mode: open
+  hints: "off"
+  weapons: randomized
+  crystals:
+    ganon: "7"
+    tower: "7"
+  enemizer:
+    boss_shuffle: none
+    enemy_damage: default
+    enemy_health: default
+    enemy_shuffle: none
+  glitches: none
+  spoilers: false
+  entrances: none
+  tournament: true
+  accessibility: items
+  dungeon_items: full
+  item_placement: advanced
