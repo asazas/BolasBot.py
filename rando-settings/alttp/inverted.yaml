@@ -2,7 +2,7 @@
 randomizer: alttp
 goal_name: inverted
 customizer: false
-description: "El mundo de la luz y el oscuro se intercambian. Empiezas en el mundo oscuro, necesitas las perla para no ser bunny en el mundo de la luz, la torre de agahnim y la de ganon se intercambian, las localizaciones que necesitas espejo son accesibles directamente desde el mundo de la luz."
+description: "El mundo de la luz y el oscuro se intercambian. Empiezas en el mundo oscuro, necesitas la perla para no ser bunny en el mundo de la luz, las torres de agahnim y la de ganon se intercambian, las localizaciones que necesitas espejo son accesibles directamente desde el mundo de la luz."
 settings:
   name: inverted
   notes: "inverted"
