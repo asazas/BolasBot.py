@@ -33,7 +33,7 @@ def init_db(db_name, server):
                     SeedHash TEXT,
                     SeedCode TEXT,
                     SeedUrl TEXT,
-                    RoleId INT NOT NULL,
+                    RoleId INT,
                     SubmitChannel INT NOT NULL,
                     ResultsChannel INT NOT NULL,
                     ResultsMessage INT NOT NULL,

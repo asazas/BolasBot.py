@@ -70,7 +70,7 @@ class AsyncRace(commands.Cog):
         self.bot = bot
 
     
-    @commands.command(aliases=["async"])
+    @commands.command(aliases=["async", "blindasync"])
     @commands.guild_only()
     async def asyncstart(self, ctx, name: str, *preset):
         """
@@ -138,18 +138,32 @@ class AsyncRace(commands.Cog):
         # Crear canales y rol para la async
 
         server = ctx.guild
+        async_role = None
+        res_overwrites = None
+        spoiler_overwrites = None
 
-        async_role = await server.create_role(name=name)
-        res_overwrites = {
-            server.default_role: discord.PermissionOverwrite(read_messages=False, send_messages=False),
-            server.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
-            async_role: discord.PermissionOverwrite(read_messages=True)
-        }
-        spoiler_overwrites = {
-            server.default_role: discord.PermissionOverwrite(read_messages=False),
-            server.me: discord.PermissionOverwrite(read_messages=True),
-            async_role: discord.PermissionOverwrite(read_messages=True)
-        }
+        if ctx.invoked_with == "blindasync":
+            res_overwrites = {
+                server.default_role: discord.PermissionOverwrite(read_messages=False, send_messages=False),
+                server.me: discord.PermissionOverwrite(read_messages=True, send_messages=True)
+            }
+            spoiler_overwrites = {
+                server.default_role: discord.PermissionOverwrite(read_messages=False),
+                server.me: discord.PermissionOverwrite(read_messages=True)
+            }
+        else:            
+            async_role = await server.create_role(name=name)
+            res_overwrites = {
+                server.default_role: discord.PermissionOverwrite(read_messages=False, send_messages=False),
+                server.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+                async_role: discord.PermissionOverwrite(read_messages=True)
+            }
+            spoiler_overwrites = {
+                server.default_role: discord.PermissionOverwrite(read_messages=False),
+                server.me: discord.PermissionOverwrite(read_messages=True),
+                async_role: discord.PermissionOverwrite(read_messages=True)
+            }
+            
 
         async_category = await server.create_category_channel(name)
         submit_channel = await server.create_text_channel("{}-submit".format(name), category=async_category)
@@ -162,8 +176,12 @@ class AsyncRace(commands.Cog):
         creator = ctx.author
         async with write_lock:
             insert_player_if_not_exists(db_cur, creator.id, creator.name, creator.discriminator, creator.mention)
-            insert_async(db_cur, name, creator.id, desc, seed_hash, seed_code, seed_url, async_role.id,
-                     submit_channel.id, results_channel.id, results_msg.id, spoilers_channel.id)
+            if ctx.invoked_with == "blindasync":
+                insert_async(db_cur, name, creator.id, desc, seed_hash, seed_code, seed_url, None,
+                             submit_channel.id, results_channel.id, results_msg.id, spoilers_channel.id)
+            else:
+                insert_async(db_cur, name, creator.id, desc, seed_hash, seed_code, seed_url, async_role.id,
+                             submit_channel.id, results_channel.id, results_msg.id, spoilers_channel.id)
             commit_db(db_conn)
 
         async_data = get_async_data(db_cur, submit_channel.id)
@@ -372,8 +390,9 @@ class AsyncRace(commands.Cog):
 
             # Eliminación de roles y canales            
 
-            async_role = ctx.guild.get_role(race[10])
-            await async_role.delete()
+            if race[10]:
+                async_role = ctx.guild.get_role(race[10])
+                await async_role.delete()
 
             category = submit_channel.category
             await submit_channel.delete()
@@ -452,8 +471,10 @@ class AsyncRace(commands.Cog):
                 results_msg = await results_channel.fetch_message(race[13])
                 await results_msg.edit(content=results_text)
 
-                async_role = ctx.guild.get_role(race[10])
-                await author.add_roles(async_role)
+                if race[10]:
+                    async_role = ctx.guild.get_role(race[10])
+                    await author.add_roles(async_role)
+                    
                 await ctx.send("GG {}, tu resultado se ha registrado.".format(author.mention))
         
             else:
